@@ -42,6 +42,8 @@ export const RecordDataGrid: React.FC<RecordDataGridProps> = ({ reportId }) => {
   const [statusFilter, setStatusFilter] = useState('');
   const [sortBy, setSortBy] = useState('createdAt');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
 
   // Selected rows
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -87,6 +89,8 @@ export const RecordDataGrid: React.FC<RecordDataGridProps> = ({ reportId }) => {
       if (statusFilter) params.append('recordStatus', statusFilter);
       if (sortBy) params.append('sortBy', sortBy);
       if (sortOrder) params.append('sortOrder', sortOrder);
+      if (dateFrom) params.append('dateFrom', dateFrom);
+      if (dateTo) params.append('dateTo', dateTo);
 
       const res = await api.get(`/reports/${reportId}/records?${params.toString()}`);
       if (res.data?.success) {
@@ -105,7 +109,7 @@ export const RecordDataGrid: React.FC<RecordDataGridProps> = ({ reportId }) => {
 
   useEffect(() => {
     fetchRecords();
-  }, [reportId, page, limit, search, statusFilter, sortBy, sortOrder]);
+  }, [reportId, page, limit, search, statusFilter, sortBy, sortOrder, dateFrom, dateTo]);
 
   // Bulk actions
   const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -232,6 +236,45 @@ export const RecordDataGrid: React.FC<RecordDataGridProps> = ({ reportId }) => {
             <option value="WARNING">Warning</option>
             <option value="ERROR">Error</option>
           </select>
+
+          {/* Date Range Filter */}
+          <div className="flex items-center gap-1.5 border border-slate-300 rounded-md px-2 py-1 bg-white text-xs">
+            <span className="text-slate-500 font-medium text-[11px]">Date:</span>
+            <input
+              type="date"
+              value={dateFrom}
+              onChange={(e) => {
+                setDateFrom(e.target.value);
+                setPage(1);
+              }}
+              className="text-xs bg-transparent focus:outline-none text-slate-800"
+              title="Close Date From"
+            />
+            <span className="text-slate-400 text-xs">to</span>
+            <input
+              type="date"
+              value={dateTo}
+              onChange={(e) => {
+                setDateTo(e.target.value);
+                setPage(1);
+              }}
+              className="text-xs bg-transparent focus:outline-none text-slate-800"
+              title="Close Date To"
+            />
+            {(dateFrom || dateTo) && (
+              <button
+                onClick={() => {
+                  setDateFrom('');
+                  setDateTo('');
+                  setPage(1);
+                }}
+                className="text-slate-400 hover:text-rose-600 text-xs ml-1 font-bold"
+                title="Reset date filter"
+              >
+                ✕
+              </button>
+            )}
+          </div>
         </div>
 
         <div className="flex items-center gap-2">

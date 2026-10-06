@@ -1,20 +1,25 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Download,
-  Printer,
-  Settings2,
-  FileText,
+  Sliders,
   Save,
   Check,
-  Palette,
-  Eye,
-  Sliders,
+  Plus,
+  Trash2,
+  Calendar,
+  X,
+  ArrowUp,
+  ArrowDown,
+  Filter,
+  Layers,
+  Sparkles,
 } from 'lucide-react';
 import { Report, ReportRecord } from '@/lib/types';
 import { Button } from '@/components/common/Button';
 import { Badge } from '@/components/common/Badge';
+import { Modal } from '@/components/common/Modal';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { api } from '@/lib/api';
 
@@ -23,12 +28,19 @@ interface LivePdfViewerProps {
   records: ReportRecord[];
 }
 
+interface ColumnConfig {
+  key: string;
+  label: string;
+  visible: boolean;
+  isCustom?: boolean;
+}
+
 export const LivePdfViewer: React.FC<LivePdfViewerProps> = ({ report, records }) => {
   // Live Template Customization State
   const [reportTitle, setReportTitle] = useState('Campaign Summary');
   const [subtitle, setSubtitle] = useState('Service Detail');
   const [headerDealership, setHeaderDealership] = useState(
-    typeof report.dealershipId === 'object' ? (report.dealershipId as any).name : report.name
+    typeof report.dealershipId === 'object' ? (report.dealershipId as any).name : report.name || 'South Morang Hyundai'
   );
   const [campaignLabel, setCampaignLabel] = useState(report.campaignName || 'HY Closed RO');
   const [dateRangeText, setDateRangeText] = useState(
@@ -41,8 +53,13 @@ export const LivePdfViewer: React.FC<LivePdfViewerProps> = ({ report, records })
   const [isDownloading, setIsDownloading] = useState(false);
   const [isTemplateSaved, setIsTemplateSaved] = useState(false);
 
-  // Column toggles
-  const [columns, setColumns] = useState([
+  // Date Filtering State
+  const [dateFilterFrom, setDateFilterFrom] = useState('');
+  const [dateFilterTo, setDateFilterTo] = useState('');
+  const [activeDatePreset, setActiveDatePreset] = useState<string>('all');
+
+  // Column Configuration State
+  const [columns, setColumns] = useState<ColumnConfig[]>([
     { key: 'externalEntityId', label: 'Entity ID', visible: true },
     { key: 'customerName', label: 'Customer Name', visible: true },
     { key: 'vehicle.year', label: 'Year', visible: true },
@@ -55,11 +72,259 @@ export const LivePdfViewer: React.FC<LivePdfViewerProps> = ({ report, records })
 
   const [showConfigDrawer, setShowConfigDrawer] = useState(false);
 
+  // Add Field Modal State
+  const [isAddFieldModalOpen, setIsAddFieldModalOpen] = useState(false);
+  const [newFieldKey, setNewFieldKey] = useState('');
+  const [newFieldLabel, setNewFieldLabel] = useState('');
+
+  // Discover all unique available fields from loaded records
+  const availableFieldSuggestions = useMemo(() => {
+    const knownFields = [
+      { key: 'vehicle.vin', label: 'Vehicle VIN' },
+      { key: 'vehicle.make', label: 'Vehicle Make' },
+      { key: 'campaignInsertDate', label: 'Campaign Insert Date' },
+      { key: 'customFields.nOrU', label: 'New / Used (N/U)' },
+      { key: 'recordStatus', label: 'Record Status' },
+      { key: 'validationNotes', label: 'Validation Notes' },
+    ];
+
+    // Scan sourceData keys across first 25 records
+    const discoveredSourceKeys = new Set<string>();
+    records.slice(0, 25).forEach((rec) => {
+      if (rec.sourceData && typeof rec.sourceData === 'object') {
+        Object.keys(rec.sourceData).forEach((k) => {
+          if (k !== 'rawLine' && k !== 'tokens') discoveredSourceKeys.add(k);
+        });
+      }
+      if (rec.customFields && typeof rec.customFields === 'object') {
+        Object.keys(rec.customFields).forEach((k) => discoveredSourceKeys.add(k));
+      }
+    });
+
+    const dynamicFields = Array.from(discoveredSourceKeys).map((k) => ({
+      key: k,
+      label: k.replace(/([A-Z])/g, ' $1').replace(/^./, (str) => str.toUpperCase()).trim(),
+    }));
+
+    // Merge without duplicates
+    const all = [...knownFields];
+    dynamicFields.forEach((df) => {
+      if (!all.some((a) => a.key === df.key)) {
+        all.push(df);
+      }
+    });
+
+    // Exclude fields already in columns
+    return all.filter((s) => !columns.some((c) => c.key === s.key));
+  }, [records, columns]);
+
+  // Synchronize dateRangeText when date filter changes
+  useEffect(() => {
+    if (dateFilterFrom && dateFilterTo) {
+      setDateRangeText(`${formatDate(dateFilterFrom)} - ${formatDate(dateFilterTo)}`);
+    } else if (dateFilterFrom) {
+      setDateRangeText(`From ${formatDate(dateFilterFrom)}`);
+    } else if (dateFilterTo) {
+      setDateRangeText(`Until ${formatDate(dateFilterTo)}`);
+    } else if (report.reportDateFrom && report.reportDateTo) {
+      setDateRangeText(`${formatDate(report.reportDateFrom)} - ${formatDate(report.reportDateTo)}`);
+    }
+  }, [dateFilterFrom, dateFilterTo, report.reportDateFrom, report.reportDateTo]);
+
+  // Handle Quick Date Presets
+  const handleDatePreset = (preset: 'all' | '7days' | '30days' | 'thisMonth') => {
+    setActiveDatePreset(preset);
+    const now = new Date();
+
+    if (preset === 'all') {
+      setDateFilterFrom('');
+      setDateFilterTo('');
+      return;
+    }
+
+    if (preset === '7days') {
+      const past = new Date();
+      past.setDate(now.getDate() - 7);
+      setDateFilterFrom(past.toISOString().split('T')[0]);
+      setDateFilterTo(now.toISOString().split('T')[0]);
+      return;
+    }
+
+    if (preset === '30days') {
+      const past = new Date();
+      past.setDate(now.getDate() - 30);
+      setDateFilterFrom(past.toISOString().split('T')[0]);
+      setDateFilterTo(now.toISOString().split('T')[0]);
+      return;
+    }
+
+    if (preset === 'thisMonth') {
+      const start = new Date(now.getFullYear(), now.getMonth(), 1);
+      setDateFilterFrom(start.toISOString().split('T')[0]);
+      setDateFilterTo(now.toISOString().split('T')[0]);
+      return;
+    }
+  };
+
+  // Filter records by date in real time
+  const filteredRecords = useMemo(() => {
+    if (!dateFilterFrom && !dateFilterTo) return records;
+
+    return records.filter((r) => {
+      if (!r.closeDate) return false;
+      const recDate = new Date(r.closeDate).toISOString().split('T')[0];
+      if (dateFilterFrom && recDate < dateFilterFrom) return false;
+      if (dateFilterTo && recDate > dateFilterTo) return false;
+      return true;
+    });
+  }, [records, dateFilterFrom, dateFilterTo]);
+
+  // Add field handler
+  const handleAddField = (key: string, label: string) => {
+    if (!key.trim() || !label.trim()) return;
+    if (columns.some((c) => c.key === key)) return;
+
+    setColumns([
+      ...columns,
+      {
+        key: key.trim(),
+        label: label.trim(),
+        visible: true,
+        isCustom: true,
+      },
+    ]);
+    setNewFieldKey('');
+    setNewFieldLabel('');
+    setIsAddFieldModalOpen(false);
+  };
+
+  // Remove column handler
+  const handleRemoveColumn = (index: number) => {
+    const updated = [...columns];
+    updated.splice(index, 1);
+    setColumns(updated);
+  };
+
+  // Move column order handler
+  const handleMoveColumn = (index: number, direction: 'up' | 'down') => {
+    const targetIdx = direction === 'up' ? index - 1 : index + 1;
+    if (targetIdx < 0 || targetIdx >= columns.length) return;
+    const updated = [...columns];
+    const temp = updated[index];
+    updated[index] = updated[targetIdx];
+    updated[targetIdx] = temp;
+    setColumns(updated);
+  };
+
+  // Dynamic Value Accessor
+  const getFieldValue = (record: any, key: string): string => {
+    if (!record || !key) return '—';
+
+    // Standard properties
+    if (key === 'externalEntityId') return record.externalEntityId || '—';
+    if (key === 'customerName') return record.customerName || '—';
+    if (key === 'vehicle.year' || key === 'year') {
+      return record.vehicle?.year ? String(record.vehicle.year) : '—';
+    }
+    if (key === 'vehicle.model') return record.vehicle?.model || '—';
+    if (key === 'vehicle.make') return record.vehicle?.make || '—';
+    if (key === 'vehicle.vin' || key === 'vin' || key === 'VIN') {
+      return record.vehicle?.vin || record.sourceData?.VIN || record.sourceData?.vin || '—';
+    }
+    if (key === 'campaignName') return record.campaignName || '—';
+    if (key === 'campaignInsertDate') {
+      return record.campaignInsertDate ? formatDate(record.campaignInsertDate) : '—';
+    }
+    if (key === 'eventNumber') return record.eventNumber || '—';
+    if (key === 'closeDate') return record.closeDate ? formatDate(record.closeDate) : '—';
+    if (key === 'roAmount') {
+      return record.roAmount !== undefined && record.roAmount !== null ? formatCurrency(record.roAmount) : '—';
+    }
+    if (key === 'recordStatus') return record.recordStatus || '—';
+    if (key === 'validationNotes') {
+      return Array.isArray(record.validationNotes) && record.validationNotes.length > 0
+        ? record.validationNotes.join('; ')
+        : '—';
+    }
+    if (key === 'customFields.nOrU' || key === 'nOrU' || key === 'nu' || key === 'N/U') {
+      return record.customFields?.nOrU || record.customFields?.nu || record.sourceData?.['N/U'] || '—';
+    }
+
+    // Nested dot path resolution
+    if (key.includes('.')) {
+      const parts = key.split('.');
+      let current = record;
+      for (const part of parts) {
+        current = current?.[part];
+      }
+      if (current !== undefined && current !== null && current !== '') {
+        return String(current);
+      }
+    }
+
+    // Direct key on record
+    if (record[key] !== undefined && record[key] !== null && record[key] !== '') {
+      return String(record[key]);
+    }
+
+    // Check customFields
+    if (record.customFields?.[key] !== undefined && record.customFields?.[key] !== null && record.customFields?.[key] !== '') {
+      return String(record.customFields[key]);
+    }
+
+    // Check sourceData (exact match or case-insensitive)
+    if (record.sourceData) {
+      if (record.sourceData[key] !== undefined && record.sourceData[key] !== null && record.sourceData[key] !== '') {
+        return String(record.sourceData[key]);
+      }
+      const lower = key.toLowerCase().replace(/[^a-z0-9]/g, '');
+      for (const [k, v] of Object.entries(record.sourceData)) {
+        if (k.toLowerCase().replace(/[^a-z0-9]/g, '') === lower && v !== undefined && v !== null && v !== '') {
+          return String(v);
+        }
+      }
+    }
+
+    return '—';
+  };
+
+  // Download PDF handler with date range and customized columns
   const handleDownloadPdf = async () => {
     setIsDownloading(true);
     try {
-      // Trigger browser download of PDF endpoint
-      const response = await fetch(`/api/reports/${report._id}/pdf`);
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      const response = await fetch(`/api/reports/${report._id}/pdf`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          dateFrom: dateFilterFrom || undefined,
+          dateTo: dateFilterTo || undefined,
+          templateSettings: {
+            reportTitle,
+            subtitle,
+            headerDealershipName: headerDealership,
+            campaignLabel,
+            dateRangeText,
+            primaryColor,
+            columns: columns.map((c) => ({
+              field: c.key,
+              label: c.label,
+              visible: c.visible,
+            })),
+            footerNotes,
+          },
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to generate PDF: ${response.statusText}`);
+      }
+
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -70,6 +335,11 @@ export const LivePdfViewer: React.FC<LivePdfViewerProps> = ({ report, records })
       window.URL.revokeObjectURL(url);
     } catch (err) {
       console.error('PDF download failed', err);
+      // Fallback direct download
+      const queryParams = new URLSearchParams();
+      if (dateFilterFrom) queryParams.append('dateFrom', dateFilterFrom);
+      if (dateFilterTo) queryParams.append('dateTo', dateFilterTo);
+      window.open(`/api/reports/${report._id}/pdf?${queryParams.toString()}`, '_blank');
     } finally {
       setIsDownloading(false);
     }
@@ -91,7 +361,11 @@ export const LivePdfViewer: React.FC<LivePdfViewerProps> = ({ report, records })
           campaignLabel,
           dateRangeText,
           primaryColor,
-          columns,
+          columns: columns.map((c) => ({
+            field: c.key,
+            label: c.label,
+            visible: c.visible,
+          })),
           footerNotes,
         },
       });
@@ -107,24 +381,38 @@ export const LivePdfViewer: React.FC<LivePdfViewerProps> = ({ report, records })
   return (
     <div className="space-y-4">
       {/* Top Controls Bar */}
-      <div className="bg-white p-3 rounded-lg border border-slate-200 shadow-xs flex items-center justify-between">
+      <div className="bg-white p-3 rounded-lg border border-slate-200 shadow-xs flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <Badge variant="default" className="font-semibold">
-            Interactive PDF Document View
+          <Badge variant="default" className="font-semibold bg-slate-800 text-white">
+            Interactive PDF Document
           </Badge>
-          <span className="text-xs text-slate-500">
-            {records.length} records formatted into printable template
+          <span className="text-xs text-slate-500 font-medium">
+            Showing <strong className="text-blue-600">{filteredRecords.length}</strong> of {records.length} records
           </span>
+          {(dateFilterFrom || dateFilterTo) && (
+            <span className="text-[11px] bg-amber-50 text-amber-700 px-2 py-0.5 rounded border border-amber-200 font-medium">
+              Date Filtered
+            </span>
+          )}
         </div>
 
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
             size="sm"
+            onClick={() => setIsAddFieldModalOpen(true)}
+            icon={<Plus className="w-3.5 h-3.5 text-blue-600" />}
+          >
+            Add Field
+          </Button>
+
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => setShowConfigDrawer(!showConfigDrawer)}
             icon={<Sliders className="w-3.5 h-3.5" />}
           >
-            Customize Template
+            {showConfigDrawer ? 'Hide Options' : 'Customize Template'}
           </Button>
 
           <Button
@@ -144,6 +432,98 @@ export const LivePdfViewer: React.FC<LivePdfViewerProps> = ({ report, records })
           >
             Download as PDF
           </Button>
+        </div>
+      </div>
+
+      {/* Date Filter Bar */}
+      <div className="bg-white p-3 rounded-lg border border-slate-200 shadow-xs flex flex-wrap items-center justify-between gap-3 text-xs">
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 font-semibold text-slate-700">
+            <Filter className="w-3.5 h-3.5 text-blue-600" />
+            <span>Filter PDF by Date:</span>
+          </div>
+
+          <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded-md">
+            <button
+              onClick={() => handleDatePreset('all')}
+              className={`px-2.5 py-1 rounded text-[11px] font-medium transition-colors ${
+                activeDatePreset === 'all' && !dateFilterFrom && !dateFilterTo
+                  ? 'bg-white text-blue-600 shadow-xs font-semibold'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              All Dates
+            </button>
+            <button
+              onClick={() => handleDatePreset('7days')}
+              className={`px-2.5 py-1 rounded text-[11px] font-medium transition-colors ${
+                activeDatePreset === '7days'
+                  ? 'bg-white text-blue-600 shadow-xs font-semibold'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              Last 7 Days
+            </button>
+            <button
+              onClick={() => handleDatePreset('30days')}
+              className={`px-2.5 py-1 rounded text-[11px] font-medium transition-colors ${
+                activeDatePreset === '30days'
+                  ? 'bg-white text-blue-600 shadow-xs font-semibold'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              Last 30 Days
+            </button>
+            <button
+              onClick={() => handleDatePreset('thisMonth')}
+              className={`px-2.5 py-1 rounded text-[11px] font-medium transition-colors ${
+                activeDatePreset === 'thisMonth'
+                  ? 'bg-white text-blue-600 shadow-xs font-semibold'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              This Month
+            </button>
+          </div>
+        </div>
+
+        {/* Date Inputs */}
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
+            <label className="text-slate-500 font-medium">From:</label>
+            <input
+              type="date"
+              value={dateFilterFrom}
+              onChange={(e) => {
+                setDateFilterFrom(e.target.value);
+                setActiveDatePreset('custom');
+              }}
+              className="px-2 py-1 border border-slate-300 rounded text-xs bg-white text-slate-800"
+            />
+          </div>
+
+          <div className="flex items-center gap-1.5">
+            <label className="text-slate-500 font-medium">To:</label>
+            <input
+              type="date"
+              value={dateFilterTo}
+              onChange={(e) => {
+                setDateFilterTo(e.target.value);
+                setActiveDatePreset('custom');
+              }}
+              className="px-2 py-1 border border-slate-300 rounded text-xs bg-white text-slate-800"
+            />
+          </div>
+
+          {(dateFilterFrom || dateFilterTo) && (
+            <button
+              onClick={() => handleDatePreset('all')}
+              className="flex items-center gap-1 text-[11px] text-rose-600 hover:text-rose-700 font-medium ml-1"
+            >
+              <X className="w-3 h-3" />
+              Reset Date
+            </button>
+          )}
         </div>
       </div>
 
@@ -213,7 +593,7 @@ export const LivePdfViewer: React.FC<LivePdfViewerProps> = ({ report, records })
 
             <div>
               <label className="block text-[11px] font-semibold text-slate-600 mb-1">
-                Date Range Text
+                Date Range Text in PDF
               </label>
               <input
                 type="text"
@@ -238,25 +618,69 @@ export const LivePdfViewer: React.FC<LivePdfViewerProps> = ({ report, records })
               </div>
             </div>
 
+            {/* Included Columns Management */}
             <div>
-              <span className="block text-[11px] font-semibold text-slate-600 mb-1.5">
-                Included Table Columns
-              </span>
-              <div className="space-y-1 bg-slate-50 p-2 rounded border border-slate-200">
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="block text-[11px] font-semibold text-slate-600">
+                  Table Columns ({activeColumns.length} visible)
+                </span>
+                <button
+                  onClick={() => setIsAddFieldModalOpen(true)}
+                  className="text-[11px] text-blue-600 hover:text-blue-700 font-semibold flex items-center gap-0.5"
+                >
+                  <Plus className="w-3 h-3" />
+                  Add Field
+                </button>
+              </div>
+
+              <div className="space-y-1.5 bg-slate-50 p-2 rounded border border-slate-200 max-h-72 overflow-y-auto">
                 {columns.map((col, idx) => (
-                  <label key={col.key} className="flex items-center gap-2 text-slate-700 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={col.visible}
-                      onChange={() => {
-                        const updated = [...columns];
-                        updated[idx].visible = !updated[idx].visible;
-                        setColumns(updated);
-                      }}
-                      className="rounded text-blue-600"
-                    />
-                    <span>{col.label}</span>
-                  </label>
+                  <div
+                    key={col.key}
+                    className="flex items-center justify-between gap-1 bg-white p-1.5 rounded border border-slate-200 text-xs"
+                  >
+                    <label className="flex items-center gap-2 text-slate-700 cursor-pointer flex-1 min-w-0">
+                      <input
+                        type="checkbox"
+                        checked={col.visible}
+                        onChange={() => {
+                          const updated = [...columns];
+                          updated[idx].visible = !updated[idx].visible;
+                          setColumns(updated);
+                        }}
+                        className="rounded text-blue-600"
+                      />
+                      <span className="truncate font-medium text-[11px]">{col.label}</span>
+                    </label>
+
+                    <div className="flex items-center gap-1 text-slate-400">
+                      <button
+                        title="Move Up"
+                        disabled={idx === 0}
+                        onClick={() => handleMoveColumn(idx, 'up')}
+                        className="hover:text-slate-700 disabled:opacity-30 p-0.5"
+                      >
+                        <ArrowUp className="w-3 h-3" />
+                      </button>
+                      <button
+                        title="Move Down"
+                        disabled={idx === columns.length - 1}
+                        onClick={() => handleMoveColumn(idx, 'down')}
+                        className="hover:text-slate-700 disabled:opacity-30 p-0.5"
+                      >
+                        <ArrowDown className="w-3 h-3" />
+                      </button>
+                      {col.isCustom && (
+                        <button
+                          title="Remove Column"
+                          onClick={() => handleRemoveColumn(idx)}
+                          className="hover:text-rose-600 text-slate-400 p-0.5"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
                 ))}
               </div>
             </div>
@@ -294,52 +718,48 @@ export const LivePdfViewer: React.FC<LivePdfViewerProps> = ({ report, records })
                   </div>
                   <div>
                     <span className="font-semibold text-slate-600">Record Count:</span>{' '}
-                    <span className="font-bold text-blue-600">{records.length}</span>
+                    <span className="font-bold text-blue-600">{filteredRecords.length}</span>
                   </div>
                 </div>
               </div>
 
               {/* Table rendering matching DealerSocket PDF */}
-              <div className="border border-slate-200 rounded-md overflow-hidden">
+              <div className="border border-slate-200 rounded-md overflow-x-auto">
                 <table className="w-full text-left text-xs border-collapse">
                   <thead>
                     <tr style={{ backgroundColor: primaryColor }} className="text-white font-semibold text-[11px] uppercase tracking-wider">
                       {activeColumns.map((c) => (
-                        <th key={c.key} className="py-2.5 px-3">
+                        <th key={c.key} className="py-2.5 px-3 whitespace-nowrap">
                           {c.label}
                         </th>
                       ))}
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 font-sans">
-                    {records.slice(0, 40).map((r, i) => (
-                      <tr key={r._id} className={i % 2 === 1 ? 'bg-slate-50/70' : 'bg-white'}>
-                        {activeColumns.map((c) => {
-                          let val = '';
-                          if (c.key === 'externalEntityId') val = r.externalEntityId || '—';
-                          else if (c.key === 'customerName') val = r.customerName || '—';
-                          else if (c.key === 'vehicle.year') val = r.vehicle?.year ? String(r.vehicle.year) : '—';
-                          else if (c.key === 'vehicle.model') val = r.vehicle?.model || '—';
-                          else if (c.key === 'campaignName') val = r.campaignName || '—';
-                          else if (c.key === 'eventNumber') val = r.eventNumber || '—';
-                          else if (c.key === 'closeDate') val = r.closeDate ? formatDate(r.closeDate) : '—';
-                          else if (c.key === 'roAmount') val = r.roAmount !== undefined ? formatCurrency(r.roAmount) : '—';
-
-                          return (
-                            <td key={c.key} className="py-2 px-3 text-slate-800">
-                              {val}
-                            </td>
-                          );
-                        })}
+                    {filteredRecords.length === 0 ? (
+                      <tr>
+                        <td colSpan={activeColumns.length} className="py-12 text-center text-slate-400">
+                          No records match the selected date range ({dateRangeText}).
+                        </td>
                       </tr>
-                    ))}
+                    ) : (
+                      filteredRecords.slice(0, 40).map((r, i) => (
+                        <tr key={r._id || i} className={i % 2 === 1 ? 'bg-slate-50/70' : 'bg-white'}>
+                          {activeColumns.map((c) => (
+                            <td key={c.key} className="py-2 px-3 text-slate-800 whitespace-nowrap text-[11px]">
+                              {getFieldValue(r, c.key)}
+                            </td>
+                          ))}
+                        </tr>
+                      ))
+                    )}
                   </tbody>
                 </table>
               </div>
 
-              {records.length > 40 && (
+              {filteredRecords.length > 40 && (
                 <div className="text-center py-2 text-xs text-slate-400 font-medium">
-                  + {records.length - 40} additional records included in downloadable PDF export
+                  + {filteredRecords.length - 40} additional records included in downloadable PDF export
                 </div>
               )}
             </div>
@@ -352,6 +772,96 @@ export const LivePdfViewer: React.FC<LivePdfViewerProps> = ({ report, records })
           </div>
         </div>
       </div>
+
+      {/* Add Field / Column Modal */}
+      <Modal
+        isOpen={isAddFieldModalOpen}
+        onClose={() => setIsAddFieldModalOpen(false)}
+        title="Add Field to PDF Template"
+      >
+        <div className="space-y-4 text-xs">
+          <div>
+            <span className="block font-semibold text-slate-700 mb-1">
+              Select an Available / Detected Field:
+            </span>
+            <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto p-1 bg-slate-50 rounded border border-slate-200">
+              {availableFieldSuggestions.map((item) => (
+                <button
+                  key={item.key}
+                  type="button"
+                  onClick={() => {
+                    setNewFieldKey(item.key);
+                    setNewFieldLabel(item.label);
+                  }}
+                  className={`text-left p-2 rounded border transition-all text-xs ${
+                    newFieldKey === item.key
+                      ? 'bg-blue-50 border-blue-500 text-blue-700 font-semibold'
+                      : 'bg-white border-slate-200 hover:border-slate-300 text-slate-800'
+                  }`}
+                >
+                  <div className="font-medium truncate">{item.label}</div>
+                  <div className="text-[10px] text-slate-400 font-mono truncate">{item.key}</div>
+                </button>
+              ))}
+              {availableFieldSuggestions.length === 0 && (
+                <div className="col-span-2 py-4 text-center text-slate-400">
+                  All detected fields are already added to the table.
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="border-t border-slate-100 pt-3 space-y-3">
+            <span className="block font-semibold text-slate-700">
+              Or Define a Custom Field / Column:
+            </span>
+
+            <div>
+              <label className="block text-[11px] font-medium text-slate-600 mb-1">
+                Field Key (Property Name or Raw Header)
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. vehicle.vin, technician, or sourceData.RO #"
+                value={newFieldKey}
+                onChange={(e) => setNewFieldKey(e.target.value)}
+                className="w-full px-2.5 py-1.5 border border-slate-300 rounded bg-white text-xs font-mono"
+              />
+            </div>
+
+            <div>
+              <label className="block text-[11px] font-medium text-slate-600 mb-1">
+                Column Header Label (Displayed in PDF Header)
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. Vehicle VIN, Technician, RO Number"
+                value={newFieldLabel}
+                onChange={(e) => setNewFieldLabel(e.target.value)}
+                className="w-full px-2.5 py-1.5 border border-slate-300 rounded bg-white text-xs"
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-2 pt-2 border-t border-slate-200">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsAddFieldModalOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              disabled={!newFieldKey.trim() || !newFieldLabel.trim()}
+              onClick={() => handleAddField(newFieldKey, newFieldLabel)}
+              icon={<Plus className="w-3.5 h-3.5" />}
+            >
+              Add Field to PDF
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };
