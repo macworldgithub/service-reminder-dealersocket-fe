@@ -64,6 +64,8 @@ export interface ReportRecord {
   dealershipId: string;
   externalEntityId?: string;
   customerName?: string;
+  customerEmail?: string;
+  customerPhone?: string;
   vehicle: Vehicle;
   campaignName?: string;
   campaignInsertDate?: string;

@@ -255,28 +255,6 @@ export default function NewImportPage() {
               </div>
             </div>
 
-            {/* Quick Demo Download helper */}
-            <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
-              <div className="text-xs font-semibold text-slate-700 mb-2 flex items-center gap-1.5">
-                <Info className="w-4 h-4 text-blue-600" />
-                <span>Quick Test Reference Files:</span>
-              </div>
-              <div className="flex flex-wrap gap-2 text-xs">
-                <span className="text-slate-500">
-                  Pre-generated reference DealerSocket files are available for instant testing in <code className="font-mono bg-slate-200 px-1 py-0.5 rounded text-[11px]">samples/</code>:
-                </span>
-                <span className="font-medium text-slate-700">
-                  • South_Morang_Hyundai_Closed_RO.pdf
-                </span>
-                <span className="font-medium text-slate-700">
-                  • South_Morang_Hyundai_Closed_RO.xlsx
-                </span>
-                <span className="font-medium text-slate-700">
-                  • South_Morang_Hyundai_Closed_RO.csv
-                </span>
-              </div>
-            </div>
-
             <div className="flex justify-end pt-4 border-t border-slate-100">
               <Button
                 disabled={!file}

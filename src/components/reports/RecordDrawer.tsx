@@ -29,6 +29,9 @@ export const RecordDrawer: React.FC<RecordDrawerProps> = ({
 
   // Editable fields state
   const [customerName, setCustomerName] = useState(record.customerName || '');
+  const [customerEmail, setCustomerEmail] = useState(
+    record.customerEmail || record.customFields?.email || record.sourceData?.Email || ''
+  );
   const [externalEntityId, setExternalEntityId] = useState(record.externalEntityId || '');
   const [eventNumber, setEventNumber] = useState(record.eventNumber || '');
   const [vehicleYear, setVehicleYear] = useState(record.vehicle?.year ? String(record.vehicle.year) : '');
@@ -44,6 +47,7 @@ export const RecordDrawer: React.FC<RecordDrawerProps> = ({
     try {
       const res = await api.patch(`/reports/${reportId}/records/${record._id}`, {
         customerName,
+        customerEmail,
         externalEntityId,
         eventNumber,
         vehicle: {
@@ -140,6 +144,17 @@ export const RecordDrawer: React.FC<RecordDrawerProps> = ({
                   value={customerName}
                   onChange={(e) => setCustomerName(e.target.value)}
                   className="w-full text-xs px-3 py-2 border border-slate-300 rounded-md bg-white focus:ring-1 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">Customer Email</label>
+                <input
+                  type="email"
+                  placeholder="e.g. customer@example.com"
+                  value={customerEmail}
+                  onChange={(e) => setCustomerEmail(e.target.value)}
+                  className="w-full text-xs px-3 py-2 border border-slate-300 rounded-md bg-white focus:ring-1 focus:ring-blue-500 font-mono"
                 />
               </div>
 

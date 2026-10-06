@@ -80,6 +80,7 @@ export const LivePdfViewer: React.FC<LivePdfViewerProps> = ({ report, records })
   // Discover all unique available fields from loaded records
   const availableFieldSuggestions = useMemo(() => {
     const knownFields = [
+      { key: 'customerEmail', label: 'Customer Email' },
       { key: 'vehicle.vin', label: 'Vehicle VIN' },
       { key: 'vehicle.make', label: 'Vehicle Make' },
       { key: 'campaignInsertDate', label: 'Campaign Insert Date' },
@@ -179,12 +180,57 @@ export const LivePdfViewer: React.FC<LivePdfViewerProps> = ({ report, records })
     });
   }, [records, dateFilterFrom, dateFilterTo]);
 
+  // Load saved columns on mount from localStorage or saved template
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(`dealersocket_pdf_columns_${report._id}`);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setColumns(parsed);
+        }
+      }
+    } catch (e) {
+      console.error('Failed to load saved PDF columns', e);
+    }
+  }, [report._id]);
+
+  // Save columns helper
+  const updateColumns = (newCols: ColumnConfig[]) => {
+    setColumns(newCols);
+    try {
+      localStorage.setItem(`dealersocket_pdf_columns_${report._id}`, JSON.stringify(newCols));
+
+      // Also automatically synchronize with the Record section!
+      const activeKeys = new Set(newCols.filter((c) => c.visible).map((c) => c.key));
+      const recordCols = {
+        entityId: activeKeys.has('externalEntityId'),
+        customer: activeKeys.has('customerName'),
+        email: activeKeys.has('customerEmail') || activeKeys.has('email'),
+        vehicle: Array.from(activeKeys).some((k) => k.startsWith('vehicle')),
+        campaign: activeKeys.has('campaignName'),
+        eventNumber: activeKeys.has('eventNumber'),
+        closeDate: activeKeys.has('closeDate'),
+        roAmount: activeKeys.has('roAmount'),
+        status: true,
+      };
+      localStorage.setItem(`dealersocket_record_columns_${report._id}`, JSON.stringify(recordCols));
+      window.dispatchEvent(new CustomEvent('columns-updated', { detail: recordCols }));
+    } catch (e) {}
+  };
+
   // Add field handler
   const handleAddField = (key: string, label: string) => {
     if (!key.trim() || !label.trim()) return;
-    if (columns.some((c) => c.key === key)) return;
+    if (columns.some((c) => c.key === key)) {
+      // If column was previously added but marked hidden, make it visible
+      const updated = columns.map((c) => (c.key === key ? { ...c, visible: true } : c));
+      updateColumns(updated);
+      setIsAddFieldModalOpen(false);
+      return;
+    }
 
-    setColumns([
+    const updated = [
       ...columns,
       {
         key: key.trim(),
@@ -192,17 +238,18 @@ export const LivePdfViewer: React.FC<LivePdfViewerProps> = ({ report, records })
         visible: true,
         isCustom: true,
       },
-    ]);
+    ];
+    updateColumns(updated);
     setNewFieldKey('');
     setNewFieldLabel('');
     setIsAddFieldModalOpen(false);
   };
 
-  // Remove column handler
+  // Remove column handler (works for any column)
   const handleRemoveColumn = (index: number) => {
     const updated = [...columns];
     updated.splice(index, 1);
-    setColumns(updated);
+    updateColumns(updated);
   };
 
   // Move column order handler
@@ -213,7 +260,7 @@ export const LivePdfViewer: React.FC<LivePdfViewerProps> = ({ report, records })
     const temp = updated[index];
     updated[index] = updated[targetIdx];
     updated[targetIdx] = temp;
-    setColumns(updated);
+    updateColumns(updated);
   };
 
   // Dynamic Value Accessor
@@ -223,6 +270,26 @@ export const LivePdfViewer: React.FC<LivePdfViewerProps> = ({ report, records })
     // Standard properties
     if (key === 'externalEntityId') return record.externalEntityId || '—';
     if (key === 'customerName') return record.customerName || '—';
+    if (key === 'customerEmail' || key === 'email' || key === 'Email') {
+      return (
+        record.customerEmail ||
+        record.customFields?.customerEmail ||
+        record.customFields?.email ||
+        record.sourceData?.Email ||
+        record.sourceData?.email ||
+        '—'
+      );
+    }
+    if (key === 'customerPhone' || key === 'phone' || key === 'Phone') {
+      return (
+        record.customerPhone ||
+        record.customFields?.customerPhone ||
+        record.customFields?.phone ||
+        record.sourceData?.Phone ||
+        record.sourceData?.phone ||
+        '—'
+      );
+    }
     if (key === 'vehicle.year' || key === 'year') {
       return record.vehicle?.year ? String(record.vehicle.year) : '—';
     }
@@ -646,7 +713,7 @@ export const LivePdfViewer: React.FC<LivePdfViewerProps> = ({ report, records })
                         onChange={() => {
                           const updated = [...columns];
                           updated[idx].visible = !updated[idx].visible;
-                          setColumns(updated);
+                          updateColumns(updated);
                         }}
                         className="rounded text-blue-600"
                       />
@@ -670,15 +737,13 @@ export const LivePdfViewer: React.FC<LivePdfViewerProps> = ({ report, records })
                       >
                         <ArrowDown className="w-3 h-3" />
                       </button>
-                      {col.isCustom && (
-                        <button
-                          title="Remove Column"
-                          onClick={() => handleRemoveColumn(idx)}
-                          className="hover:text-rose-600 text-slate-400 p-0.5"
-                        >
-                          <Trash2 className="w-3 h-3" />
-                        </button>
-                      )}
+                      <button
+                        title="Delete Column"
+                        onClick={() => handleRemoveColumn(idx)}
+                        className="hover:text-rose-600 text-slate-400 p-0.5 ml-0.5 transition-colors"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
                     </div>
                   </div>
                 ))}

@@ -16,6 +16,8 @@ import {
   FileSpreadsheet,
   AlertCircle,
   Eye,
+  Sparkles,
+  Mail,
 } from 'lucide-react';
 import { ReportRecord } from '@/lib/types';
 import { Badge } from '@/components/common/Badge';
@@ -54,6 +56,7 @@ export const RecordDataGrid: React.FC<RecordDataGridProps> = ({ reportId }) => {
   // Add Record Modal
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [newCustomerName, setNewCustomerName] = useState('');
+  const [newCustomerEmail, setNewCustomerEmail] = useState('');
   const [newEntityId, setNewEntityId] = useState('');
   const [newEventNumber, setNewEventNumber] = useState('');
   const [newYear, setNewYear] = useState('2023');
@@ -61,6 +64,7 @@ export const RecordDataGrid: React.FC<RecordDataGridProps> = ({ reportId }) => {
   const [newRoAmount, setNewRoAmount] = useState('350.00');
   const [newCloseDate, setNewCloseDate] = useState('2026-10-01');
   const [isCreating, setIsCreating] = useState(false);
+  const [isPopulatingEmails, setIsPopulatingEmails] = useState(false);
 
   // Inline editing state
   const [editingRowId, setEditingRowId] = useState<string | null>(null);
@@ -70,6 +74,7 @@ export const RecordDataGrid: React.FC<RecordDataGridProps> = ({ reportId }) => {
   const [visibleColumns, setVisibleColumns] = useState({
     entityId: true,
     customer: true,
+    email: true,
     vehicle: true,
     campaign: true,
     eventNumber: true,
@@ -78,6 +83,61 @@ export const RecordDataGrid: React.FC<RecordDataGridProps> = ({ reportId }) => {
     status: true,
   });
   const [showColMenu, setShowColMenu] = useState(false);
+
+  // Load saved column visibility on mount & listen to changes from Live Area
+  useEffect(() => {
+    const applySync = () => {
+      try {
+        const recordSaved = localStorage.getItem(`dealersocket_record_columns_${reportId}`);
+        if (recordSaved) {
+          setVisibleColumns(JSON.parse(recordSaved));
+          return;
+        }
+
+        const pdfSaved = localStorage.getItem(`dealersocket_pdf_columns_${reportId}`);
+        if (pdfSaved) {
+          const pdfCols: Array<{ key: string; visible: boolean }> = JSON.parse(pdfSaved);
+          if (Array.isArray(pdfCols)) {
+            const activeKeys = new Set(pdfCols.filter((c) => c.visible).map((c) => c.key));
+            setVisibleColumns({
+              entityId: activeKeys.has('externalEntityId'),
+              customer: activeKeys.has('customerName'),
+              email: activeKeys.has('customerEmail') || activeKeys.has('email'),
+              vehicle: Array.from(activeKeys).some((k) => k.startsWith('vehicle')),
+              campaign: activeKeys.has('campaignName'),
+              eventNumber: activeKeys.has('eventNumber'),
+              closeDate: activeKeys.has('closeDate'),
+              roAmount: activeKeys.has('roAmount'),
+              status: true,
+            });
+          }
+        }
+      } catch (e) {}
+    };
+
+    applySync();
+
+    const handleUpdate = (e: any) => {
+      if (e.detail) {
+        setVisibleColumns(e.detail);
+      } else {
+        applySync();
+      }
+    };
+
+    window.addEventListener('columns-updated', handleUpdate);
+    return () => window.removeEventListener('columns-updated', handleUpdate);
+  }, [reportId]);
+
+  const toggleColumnVisibility = (col: string, isVis: boolean) => {
+    setVisibleColumns((prev) => {
+      const next = { ...prev, [col]: isVis };
+      try {
+        localStorage.setItem(`dealersocket_record_columns_${reportId}`, JSON.stringify(next));
+      } catch (e) {}
+      return next;
+    });
+  };
 
   const fetchRecords = async () => {
     setIsLoading(true);
@@ -161,6 +221,7 @@ export const RecordDataGrid: React.FC<RecordDataGridProps> = ({ reportId }) => {
     setEditingRowId(rec._id);
     setInlineValues({
       customerName: rec.customerName || '',
+      customerEmail: rec.customerEmail || rec.customFields?.email || '',
       externalEntityId: rec.externalEntityId || '',
       eventNumber: rec.eventNumber || '',
       roAmount: rec.roAmount !== undefined ? String(rec.roAmount) : '',
@@ -172,6 +233,7 @@ export const RecordDataGrid: React.FC<RecordDataGridProps> = ({ reportId }) => {
     try {
       await api.patch(`/reports/${reportId}/records/${id}`, {
         customerName: inlineValues.customerName,
+        customerEmail: inlineValues.customerEmail,
         externalEntityId: inlineValues.externalEntityId,
         eventNumber: inlineValues.eventNumber,
         roAmount: inlineValues.roAmount ? parseFloat(inlineValues.roAmount) : undefined,
@@ -183,11 +245,25 @@ export const RecordDataGrid: React.FC<RecordDataGridProps> = ({ reportId }) => {
     }
   };
 
+  const handlePopulateEmails = async () => {
+    if (!confirm('Auto-fill formatted customer emails (e.g. name@gmail.com) for all rows missing email in this report?')) return;
+    setIsPopulatingEmails(true);
+    try {
+      await api.post(`/reports/${reportId}/records/populate-emails`);
+      await fetchRecords();
+    } catch (err) {
+      console.error('Failed to populate emails', err);
+    } finally {
+      setIsPopulatingEmails(false);
+    }
+  };
+
   const handleCreateRecord = async () => {
     setIsCreating(true);
     try {
       await api.post(`/reports/${reportId}/records`, {
         customerName: newCustomerName,
+        customerEmail: newCustomerEmail || undefined,
         externalEntityId: newEntityId,
         eventNumber: newEventNumber,
         vehicle: {
@@ -201,6 +277,7 @@ export const RecordDataGrid: React.FC<RecordDataGridProps> = ({ reportId }) => {
       });
       setIsAddModalOpen(false);
       setNewCustomerName('');
+      setNewCustomerEmail('');
       setNewEntityId('');
       fetchRecords();
     } catch (err) {
@@ -316,9 +393,7 @@ export const RecordDataGrid: React.FC<RecordDataGridProps> = ({ reportId }) => {
                     <input
                       type="checkbox"
                       checked={isVis}
-                      onChange={() =>
-                        setVisibleColumns((prev) => ({ ...prev, [col]: !isVis }))
-                      }
+                      onChange={() => toggleColumnVisibility(col, !isVis)}
                       className="rounded text-blue-600"
                     />
                     <span className="capitalize">{col.replace(/([A-Z])/g, ' $1')}</span>
@@ -327,6 +402,17 @@ export const RecordDataGrid: React.FC<RecordDataGridProps> = ({ reportId }) => {
               </div>
             )}
           </div>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handlePopulateEmails}
+            isLoading={isPopulatingEmails}
+            icon={<Sparkles className="w-3.5 h-3.5 text-indigo-600" />}
+            title="Auto-fill customer emails for any rows missing an email"
+          >
+            Auto-Fill Emails
+          </Button>
 
           <a href={`/api/reports/${reportId}/export/csv`} download>
             <Button variant="outline" size="sm" icon={<Download className="w-3.5 h-3.5" />}>
@@ -380,6 +466,7 @@ export const RecordDataGrid: React.FC<RecordDataGridProps> = ({ reportId }) => {
                     Customer Name
                   </th>
                 )}
+                {visibleColumns.email && <th className="py-2.5 px-3">Email</th>}
                 {visibleColumns.vehicle && <th className="py-2.5 px-3">Vehicle (Year/Model)</th>}
                 {visibleColumns.campaign && <th className="py-2.5 px-3">Campaign</th>}
                 {visibleColumns.eventNumber && <th className="py-2.5 px-3">Event#</th>}
@@ -481,6 +568,26 @@ export const RecordDataGrid: React.FC<RecordDataGridProps> = ({ reportId }) => {
                             />
                           ) : (
                             r.customerName || '—'
+                          )}
+                        </td>
+                      )}
+
+                      {/* Customer Email */}
+                      {visibleColumns.email && (
+                        <td className="py-2 px-3 text-slate-600 font-mono text-[11px]">
+                          {isInline ? (
+                            <input
+                              type="email"
+                              value={inlineValues.customerEmail || ''}
+                              onClick={(e) => e.stopPropagation()}
+                              onChange={(e) =>
+                                setInlineValues({ ...inlineValues, customerEmail: e.target.value })
+                              }
+                              className="px-1.5 py-0.5 border border-blue-400 rounded text-xs w-44 bg-white"
+                              placeholder="e.g. name@gmail.com"
+                            />
+                          ) : (
+                            r.customerEmail || r.customFields?.email || r.sourceData?.Email || '—'
                           )}
                         </td>
                       )}
@@ -685,6 +792,17 @@ export const RecordDataGrid: React.FC<RecordDataGridProps> = ({ reportId }) => {
               onChange={(e) => setNewCustomerName(e.target.value)}
               placeholder="e.g. Jack Taylor"
               className="w-full text-xs px-3 py-2 border border-slate-300 rounded bg-white"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 mb-1">Customer Email</label>
+            <input
+              type="email"
+              value={newCustomerEmail}
+              onChange={(e) => setNewCustomerEmail(e.target.value)}
+              placeholder="e.g. jack.taylor@gmail.com"
+              className="w-full text-xs px-3 py-2 border border-slate-300 rounded bg-white font-mono"
             />
           </div>
 
