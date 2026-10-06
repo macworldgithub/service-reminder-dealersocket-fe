@@ -52,5 +52,5 @@ npm run build
 npm run start
 ```
 
-Default application URL: `http://localhost:3000`
-API proxy: Configured in `next.config.js` to route `/api/*` to `http://localhost:5000/api/*`.
+Default application URL: `http://localhost:7001`
+API proxy: Configured in `next.config.js` to route `/api/*` to `http://localhost:7000/api/*`.

@@ -10,22 +10,17 @@ import {
   History,
   FileText,
   Workflow,
-  ShieldCheck,
-  Users,
   Settings,
   LogOut,
   Building2,
-  ChevronDown,
   Car,
 } from 'lucide-react';
 import { useAuth } from '@/lib/authContext';
-import { Badge } from '@/components/common/Badge';
 import { cn } from '@/lib/utils';
 
 export const Sidebar: React.FC = () => {
   const pathname = usePathname();
-  const { user, dealerships, activeDealership, setActiveDealership, logout } = useAuth();
-  const [dealershipOpen, setDealershipOpen] = React.useState(false);
+  const { user, activeDealership, logout } = useAuth();
 
   const navigation = [
     { name: 'Dashboard', href: '/', icon: LayoutDashboard },
@@ -34,11 +29,8 @@ export const Sidebar: React.FC = () => {
     { name: 'Ingestion History', href: '/imports', icon: History },
     { name: 'Templates & PDF', href: '/templates', icon: FileText },
     { name: 'Campaign Engine', href: '/campaigns', icon: Workflow },
-    { name: 'Audit Trail', href: '/audit', icon: ShieldCheck },
+    { name: 'Settings', href: '/settings', icon: Settings },
   ];
-
-    navigation.push({ name: 'User Management', href: '/users', icon: Users });
-    navigation.push({ name: 'Settings', href: '/settings', icon: Settings });
 
   return (
     <aside className="w-64 bg-slate-900 border-r border-slate-800 text-slate-300 flex flex-col shrink-0 min-h-screen">
@@ -59,47 +51,21 @@ export const Sidebar: React.FC = () => {
         </Link>
       </div>
 
-      {/* Dealership Switcher */}
+      {/* Active Dealership (South Morang Hyundai only) */}
       <div className="p-3 border-b border-slate-800">
         <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider px-2 mb-1.5">
           Active Dealership
         </div>
-        <div className="relative">
-          <button
-            onClick={() => setDealershipOpen(!dealershipOpen)}
-            className="w-full flex items-center justify-between px-2.5 py-2 rounded-md bg-slate-800/80 hover:bg-slate-800 border border-slate-700/80 text-left transition-colors"
-          >
-            <div className="flex items-center gap-2 truncate">
-              <Building2 className="w-3.5 h-3.5 text-blue-400 shrink-0" />
-              <span className="text-xs font-medium text-white truncate">
-                {activeDealership?.name || 'Select Dealership'}
-              </span>
-            </div>
-            <ChevronDown className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-          </button>
-
-          {dealershipOpen && (
-            <div className="absolute top-full left-0 right-0 mt-1 py-1 bg-slate-800 border border-slate-700 rounded-md shadow-xl z-20">
-              {dealerships.map((d) => (
-                <button
-                  key={d._id}
-                  onClick={() => {
-                    setActiveDealership(d);
-                    setDealershipOpen(false);
-                  }}
-                  className={cn(
-                    'w-full text-left px-3 py-1.5 text-xs transition-colors flex items-center justify-between',
-                    activeDealership?._id === d._id
-                      ? 'bg-blue-600 text-white font-medium'
-                      : 'text-slate-300 hover:bg-slate-700/60'
-                  )}
-                >
-                  <span className="truncate">{d.name}</span>
-                  <span className="text-[10px] opacity-70 ml-2 font-mono">{d.code}</span>
-                </button>
-              ))}
-            </div>
-          )}
+        <div className="w-full flex items-center justify-between px-2.5 py-2 rounded-md bg-slate-800/80 border border-slate-700/80">
+          <div className="flex items-center gap-2 truncate">
+            <Building2 className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+            <span className="text-xs font-medium text-white truncate">
+              {activeDealership?.name || 'South Morang Hyundai'}
+            </span>
+          </div>
+          <span className="text-[10px] font-mono text-slate-400 bg-slate-700/60 px-1.5 py-0.5 rounded">
+            {activeDealership?.code || 'SMH-01'}
+          </span>
         </div>
       </div>
 
@@ -136,18 +102,9 @@ export const Sidebar: React.FC = () => {
 
       {/* User Profile & Logout Footer */}
       <div className="p-3 border-t border-slate-800 bg-slate-950/40">
-        <div className="flex items-center justify-between px-2 py-1.5 mb-1">
-          <div className="min-w-0 flex-1">
-            <div className="text-xs font-medium text-white truncate">{user?.name || 'Devs'}</div>
-            <div className="text-[11px] text-slate-400 truncate">{user?.email || 'devs@neximet.com'}</div>
-          </div>
-          <Badge
-            variant="default"
-            size="sm"
-            className="ml-2 shrink-0 font-mono"
-          >
-            ADMIN
-          </Badge>
+        <div className="px-2 py-1.5 mb-1">
+          <div className="text-xs font-semibold text-white truncate">{user?.name || 'Devs'}</div>
+          <div className="text-[11px] text-slate-400 truncate">{user?.email || 'devs@neximet.com'}</div>
         </div>
         <button
           onClick={logout}
