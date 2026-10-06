@@ -23,7 +23,7 @@ import { Button } from '@/components/common/Button';
 import { Badge } from '@/components/common/Badge';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/authContext';
-import { formatCurrency, formatFileSize } from '@/lib/utils';
+import { formatCurrency, formatFileSize, formatDate } from '@/lib/utils';
 
 export default function NewImportPage() {
   const router = useRouter();
@@ -468,7 +468,10 @@ export default function NewImportPage() {
                     <th className="py-2.5 px-3">#</th>
                     <th className="py-2.5 px-3">Entity ID</th>
                     <th className="py-2.5 px-3">Customer Name</th>
-                    <th className="py-2.5 px-3">Year &amp; Model</th>
+                    <th className="py-2.5 px-3">N/U</th>
+                    <th className="py-2.5 px-3">Year</th>
+                    <th className="py-2.5 px-3">Make/Model</th>
+                    <th className="py-2.5 px-3">Campaign Insert</th>
                     <th className="py-2.5 px-3">Event#</th>
                     <th className="py-2.5 px-3">Close Date</th>
                     <th className="py-2.5 px-3">RO Amount</th>
@@ -483,12 +486,17 @@ export default function NewImportPage() {
                         {r.externalEntityId || '—'}
                       </td>
                       <td className="py-2 px-3 text-slate-800">{r.customerName || '—'}</td>
+                      <td className="py-2 px-3 text-slate-600 font-mono">{r.nOrU || '—'}</td>
+                      <td className="py-2 px-3 text-slate-600 font-mono">{r.vehicle?.year || '—'}</td>
                       <td className="py-2 px-3 text-slate-600">
-                        {[r.vehicle?.year, r.vehicle?.model].filter(Boolean).join(' ') || '—'}
+                        {[r.vehicle?.make, r.vehicle?.model].filter(Boolean).join(' ') || '—'}
+                      </td>
+                      <td className="py-2 px-3 text-slate-600">
+                        {r.campaignInsertDate ? formatDate(r.campaignInsertDate) : '—'}
                       </td>
                       <td className="py-2 px-3 text-slate-600 font-mono">{r.eventNumber || '—'}</td>
                       <td className="py-2 px-3 text-slate-600">
-                        {r.closeDate ? new Date(r.closeDate).toLocaleDateString() : '—'}
+                        {r.closeDate ? formatDate(r.closeDate) : '—'}
                       </td>
                       <td className="py-2 px-3 font-semibold text-slate-900">
                         {r.roAmount !== undefined ? formatCurrency(r.roAmount) : '—'}

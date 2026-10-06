@@ -72,6 +72,7 @@ export interface ReportRecord {
   eventNumber?: string;
   closeDate?: string;
   roAmount?: number;
+  nOrU?: string;
   customFields?: Record<string, any>;
   sourceData: Record<string, any>;
   recordStatus: 'VALID' | 'WARNING' | 'ERROR';
