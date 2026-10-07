@@ -21,6 +21,12 @@ import {
   ArrowLeft,
   ShieldCheck,
   Clock,
+  BarChart3,
+  ArrowRight,
+  Filter,
+  ChevronRight,
+  X,
+  Percent,
 } from 'lucide-react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Button } from '@/components/common/Button';
@@ -28,7 +34,7 @@ import { Badge } from '@/components/common/Badge';
 import { RecordDataGrid } from '@/components/reports/RecordDataGrid';
 import { LivePdfViewer } from '@/components/reports/LivePdfViewer';
 import { api } from '@/lib/api';
-import { Report, ReportRecord, AuditLog } from '@/lib/types';
+import { Report, ReportRecord, AuditLog, RevenueLookupResult } from '@/lib/types';
 import { formatCurrency, formatDate } from '@/lib/utils';
 
 export default function ReportDetailPage() {
@@ -43,16 +49,45 @@ export default function ReportDetailPage() {
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Individual Report Revenue Lookup State
+  const [lookupDateFrom, setLookupDateFrom] = useState('');
+  const [lookupDateTo, setLookupDateTo] = useState('');
+  const [revenueLookup, setRevenueLookup] = useState<RevenueLookupResult | null>(null);
+  const [isLookupLoading, setIsLookupLoading] = useState(false);
+  const [gridDateFrom, setGridDateFrom] = useState('');
+  const [gridDateTo, setGridDateTo] = useState('');
+
   // Tabs
   const [activeTab, setActiveTab] = useState<'overview' | 'records' | 'pdf' | 'mappings' | 'audit'>('records');
+
+  const fetchRevenueLookup = async (fromVal?: string, toVal?: string) => {
+    setIsLookupLoading(true);
+    try {
+      const qFrom = fromVal !== undefined ? fromVal : lookupDateFrom;
+      const qTo = toVal !== undefined ? toVal : lookupDateTo;
+      const params = new URLSearchParams();
+      if (qFrom) params.append('dateFrom', qFrom);
+      if (qTo) params.append('dateTo', qTo);
+
+      const res = await api.get(`/reports/${id}/revenue-lookup?${params.toString()}`);
+      if (res.data?.success) {
+        setRevenueLookup(res.data.data);
+      }
+    } catch (err) {
+      console.error('Failed to load revenue lookup', err);
+    } finally {
+      setIsLookupLoading(false);
+    }
+  };
 
   const fetchReportData = async () => {
     setIsLoading(true);
     try {
-      const [reportRes, recordsRes, auditRes] = await Promise.all([
+      const [reportRes, recordsRes, auditRes, lookupRes] = await Promise.all([
         api.get(`/reports/${id}`),
         api.get(`/reports/${id}/records?limit=100`),
         api.get(`/audit-logs?entityId=${id}`),
+        api.get(`/reports/${id}/revenue-lookup`),
       ]);
 
       if (reportRes.data?.success) {
@@ -66,6 +101,9 @@ export default function ReportDetailPage() {
       if (auditRes.data?.success) {
         setAuditLogs(auditRes.data.data || []);
       }
+      if (lookupRes.data?.success) {
+        setRevenueLookup(lookupRes.data.data);
+      }
     } catch (err) {
       console.error('Failed to load report detail', err);
     } finally {
@@ -76,6 +114,55 @@ export default function ReportDetailPage() {
   useEffect(() => {
     if (id) fetchReportData();
   }, [id]);
+
+  const applyDatePreset = (preset: 'entire' | '2025' | '2026' | 'q1_2025' | 'q2_2025' | 'q3_2025' | 'q4_2025') => {
+    let f = '';
+    let t = '';
+    if (preset === 'entire') {
+      f = '';
+      t = '';
+    } else if (preset === '2025') {
+      f = '2025-01-01';
+      t = '2025-12-31';
+    } else if (preset === '2026') {
+      f = '2026-01-01';
+      t = '2026-12-31';
+    } else if (preset === 'q1_2025') {
+      f = '2025-01-01';
+      t = '2025-03-31';
+    } else if (preset === 'q2_2025') {
+      f = '2025-04-01';
+      t = '2025-06-30';
+    } else if (preset === 'q3_2025') {
+      f = '2025-07-01';
+      t = '2025-09-30';
+    } else if (preset === 'q4_2025') {
+      f = '2025-10-01';
+      t = '2025-12-31';
+    }
+    setLookupDateFrom(f);
+    setLookupDateTo(t);
+    fetchRevenueLookup(f, t);
+  };
+
+  const handleApplySingleMonth = (monthStr: string) => {
+    // monthStr is "YYYY-MM"
+    const [y, m] = monthStr.split('-').map(Number);
+    const lastDay = new Date(y, m, 0).getDate();
+    const f = `${y}-${String(m).padStart(2, '0')}-01`;
+    const t = `${y}-${String(m).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+    setLookupDateFrom(f);
+    setLookupDateTo(t);
+    fetchRevenueLookup(f, t);
+  };
+
+  const handleViewRecordsInGrid = (fromVal?: string, toVal?: string) => {
+    const f = fromVal !== undefined ? fromVal : lookupDateFrom;
+    const t = toVal !== undefined ? toVal : lookupDateTo;
+    setGridDateFrom(f);
+    setGridDateTo(t);
+    setActiveTab('records');
+  };
 
   if (isLoading || !report) {
     return (
@@ -172,6 +259,7 @@ export default function ReportDetailPage() {
         {/* TAB 1: OVERVIEW */}
         {activeTab === 'overview' && (
           <div className="space-y-6">
+            {/* 4 Standard Summary Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-xs">
                 <span className="text-xs text-slate-500 uppercase font-medium">Total Revenue Tracked</span>
@@ -202,6 +290,305 @@ export default function ReportDetailPage() {
                 <div className="text-[11px] text-slate-400 mt-0.5">Potential duplicate/date checks</div>
               </div>
             </div>
+
+            {/* Individual Report Revenue Lookup & Date Filter Card */}
+            <div className="bg-white rounded-lg border border-blue-200 shadow-xs overflow-hidden">
+              <div className="bg-gradient-to-r from-blue-50/80 via-indigo-50/50 to-white px-5 py-4 border-b border-blue-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center shadow-xs">
+                    <DollarSign className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                      <span>Individual Report Revenue Lookup</span>
+                      <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">
+                        Date Range Filter
+                      </span>
+                    </h2>
+                    <p className="text-xs text-slate-500">
+                      Filter by date to calculate exact RO revenue and repair order volume in this report
+                    </p>
+                  </div>
+                </div>
+
+                {revenueLookup && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="border-blue-300 text-blue-700 hover:bg-blue-50 text-xs"
+                    onClick={() => handleViewRecordsInGrid()}
+                    icon={<ArrowRight className="w-3.5 h-3.5" />}
+                  >
+                    View {revenueLookup.filteredCount} Records in Grid
+                  </Button>
+                )}
+              </div>
+
+              <div className="p-5 space-y-4">
+                {/* Date Filter Controls */}
+                <div className="flex flex-wrap items-center gap-3 bg-slate-50/80 p-3 rounded-lg border border-slate-200">
+                  <div className="flex items-center gap-2 text-xs">
+                    <Calendar className="w-4 h-4 text-blue-600 shrink-0" />
+                    <span className="font-semibold text-slate-700">From Date:</span>
+                    <input
+                      type="date"
+                      value={lookupDateFrom}
+                      onChange={(e) => {
+                        setLookupDateFrom(e.target.value);
+                        fetchRevenueLookup(e.target.value, lookupDateTo);
+                      }}
+                      className="px-2 py-1 border border-slate-300 rounded text-xs bg-white text-slate-800 shadow-2xs font-mono"
+                    />
+                    <span className="font-semibold text-slate-700 ml-1">To Date:</span>
+                    <input
+                      type="date"
+                      value={lookupDateTo}
+                      onChange={(e) => {
+                        setLookupDateTo(e.target.value);
+                        fetchRevenueLookup(lookupDateFrom, e.target.value);
+                      }}
+                      className="px-2 py-1 border border-slate-300 rounded text-xs bg-white text-slate-800 shadow-2xs font-mono"
+                    />
+                    {(lookupDateFrom || lookupDateTo) && (
+                      <button
+                        onClick={() => applyDatePreset('entire')}
+                        className="p-1 text-slate-400 hover:text-rose-600 rounded"
+                        title="Clear Date Filter"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Quick Preset Buttons */}
+                  <div className="flex flex-wrap items-center gap-1.5 ml-auto text-xs">
+                    <span className="text-slate-400 text-[11px] font-medium mr-1">Presets:</span>
+                    <button
+                      onClick={() => applyDatePreset('entire')}
+                      className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
+                        !lookupDateFrom && !lookupDateTo
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
+                      }`}
+                    >
+                      Entire Period
+                    </button>
+                    <button
+                      onClick={() => applyDatePreset('2025')}
+                      className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
+                        lookupDateFrom === '2025-01-01' && lookupDateTo === '2025-12-31'
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
+                      }`}
+                    >
+                      Year 2025
+                    </button>
+                    <button
+                      onClick={() => applyDatePreset('q1_2025')}
+                      className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
+                        lookupDateFrom === '2025-01-01' && lookupDateTo === '2025-03-31'
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
+                      }`}
+                    >
+                      Q1 2025
+                    </button>
+                    <button
+                      onClick={() => applyDatePreset('q2_2025')}
+                      className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
+                        lookupDateFrom === '2025-04-01' && lookupDateTo === '2025-06-30'
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
+                      }`}
+                    >
+                      Q2 2025
+                    </button>
+                    <button
+                      onClick={() => applyDatePreset('q3_2025')}
+                      className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
+                        lookupDateFrom === '2025-07-01' && lookupDateTo === '2025-09-30'
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
+                      }`}
+                    >
+                      Q3 2025
+                    </button>
+                    <button
+                      onClick={() => applyDatePreset('q4_2025')}
+                      className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
+                        lookupDateFrom === '2025-10-01' && lookupDateTo === '2025-12-31'
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
+                      }`}
+                    >
+                      Q4 2025
+                    </button>
+                  </div>
+                </div>
+
+                {/* Lookup Metrics Display */}
+                {revenueLookup && (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-1">
+                    {/* Filtered Revenue Card */}
+                    <div className="p-4 rounded-lg bg-emerald-50/60 border border-emerald-200 shadow-2xs">
+                      <span className="text-[11px] font-semibold text-emerald-800 uppercase tracking-wider block">
+                        Period Tracked Revenue
+                      </span>
+                      <div className="text-2xl font-black text-emerald-700 font-mono mt-1">
+                        {formatCurrency(revenueLookup.filteredRevenue)}
+                      </div>
+                      <div className="mt-2 flex items-center justify-between text-xs text-emerald-800">
+                        <span>Share of Total:</span>
+                        <strong className="font-semibold">{revenueLookup.percentageOfTotal}%</strong>
+                      </div>
+                      <div className="w-full bg-emerald-200 rounded-full h-1.5 mt-1 overflow-hidden">
+                        <div
+                          className="bg-emerald-600 h-1.5 rounded-full"
+                          style={{ width: `${Math.min(100, revenueLookup.percentageOfTotal)}%` }}
+                        />
+                      </div>
+                      <span className="text-[10px] text-emerald-700/80 block mt-1">
+                        Report Total: {formatCurrency(revenueLookup.totalRevenue)}
+                      </span>
+                    </div>
+
+                    {/* Filtered Orders Card */}
+                    <div className="p-4 rounded-lg bg-blue-50/60 border border-blue-200 shadow-2xs">
+                      <span className="text-[11px] font-semibold text-blue-800 uppercase tracking-wider block">
+                        Closed Repair Orders (ROs)
+                      </span>
+                      <div className="text-2xl font-black text-blue-700 font-mono mt-1">
+                        {revenueLookup.filteredCount}
+                      </div>
+                      <div className="mt-2 flex items-center justify-between text-xs text-blue-800">
+                        <span>Share of Records:</span>
+                        <strong className="font-semibold">
+                          {revenueLookup.totalRecords > 0
+                            ? Math.round((revenueLookup.filteredCount / revenueLookup.totalRecords) * 1000) / 10
+                            : 0}
+                          %
+                        </strong>
+                      </div>
+                      <div className="w-full bg-blue-200 rounded-full h-1.5 mt-1 overflow-hidden">
+                        <div
+                          className="bg-blue-600 h-1.5 rounded-full"
+                          style={{
+                            width: `${
+                              revenueLookup.totalRecords > 0
+                                ? Math.min(100, (revenueLookup.filteredCount / revenueLookup.totalRecords) * 100)
+                                : 0
+                            }%`,
+                          }}
+                        />
+                      </div>
+                      <span className="text-[10px] text-blue-700/80 block mt-1">
+                        Total Report Rows: {revenueLookup.totalRecords}
+                      </span>
+                    </div>
+
+                    {/* Period Average RO Card */}
+                    <div className="p-4 rounded-lg bg-indigo-50/60 border border-indigo-200 shadow-2xs">
+                      <span className="text-[11px] font-semibold text-indigo-800 uppercase tracking-wider block">
+                        Period Average RO Amount
+                      </span>
+                      <div className="text-2xl font-black text-indigo-700 font-mono mt-1">
+                        {formatCurrency(revenueLookup.filteredAvgRoAmount)}
+                      </div>
+                      <div className="mt-2 flex items-center justify-between text-xs text-indigo-800">
+                        <span>Overall Report Avg:</span>
+                        <strong className="font-semibold">{formatCurrency(revenueLookup.overallAvgRo)}</strong>
+                      </div>
+                      <div className="text-[11px] text-indigo-700 mt-1.5 flex items-center justify-between">
+                        <span>RO Range:</span>
+                        <span className="font-mono font-medium">
+                          {formatCurrency(revenueLookup.minRoAmount)} – {formatCurrency(revenueLookup.maxRoAmount)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Monthly Revenue & RO Breakdown */}
+            {revenueLookup?.monthlyBreakdown && revenueLookup.monthlyBreakdown.length > 0 && (
+              <div className="bg-white rounded-lg border border-slate-200 shadow-xs overflow-hidden">
+                <div className="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between">
+                  <div>
+                    <h3 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
+                      <BarChart3 className="w-4 h-4 text-blue-600" />
+                      <span>Monthly Revenue Distribution</span>
+                    </h3>
+                    <p className="text-xs text-slate-500">
+                      Breakdown of Closed RO revenue and order counts month-by-month in this report
+                    </p>
+                  </div>
+                  <span className="text-xs font-semibold text-slate-600 bg-slate-100 px-2.5 py-1 rounded-md">
+                    {revenueLookup.monthlyBreakdown.length} Active Months
+                  </span>
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead>
+                      <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold uppercase text-[11px] tracking-wider">
+                        <th className="py-2.5 px-4">Month</th>
+                        <th className="py-2.5 px-4 text-right">Closed ROs</th>
+                        <th className="py-2.5 px-4 text-right">Revenue Tracked</th>
+                        <th className="py-2.5 px-4 text-right">Avg RO</th>
+                        <th className="py-2.5 px-4 w-48">Share of Report Revenue</th>
+                        <th className="py-2.5 px-4 text-right">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {revenueLookup.monthlyBreakdown.map((m) => {
+                        const pct =
+                          revenueLookup.totalRevenue > 0
+                            ? Math.round((m.revenue / revenueLookup.totalRevenue) * 1000) / 10
+                            : 0;
+                        return (
+                          <tr key={m.month} className="hover:bg-slate-50/80 transition-colors">
+                            <td className="py-2.5 px-4 font-semibold text-slate-800">
+                              {m.label}
+                            </td>
+                            <td className="py-2.5 px-4 text-right font-mono text-slate-700">
+                              {m.count}
+                            </td>
+                            <td className="py-2.5 px-4 text-right font-bold font-mono text-slate-900">
+                              {formatCurrency(m.revenue)}
+                            </td>
+                            <td className="py-2.5 px-4 text-right font-mono text-slate-600">
+                              {formatCurrency(m.avgRo)}
+                            </td>
+                            <td className="py-2.5 px-4">
+                              <div className="flex items-center gap-2">
+                                <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                                  <div
+                                    className="bg-blue-600 h-1.5 rounded-full"
+                                    style={{ width: `${Math.min(100, pct)}%` }}
+                                  />
+                                </div>
+                                <span className="text-[11px] font-mono text-slate-500 w-10 text-right">
+                                  {pct}%
+                                </span>
+                              </div>
+                            </td>
+                            <td className="py-2.5 px-4 text-right">
+                              <button
+                                onClick={() => handleApplySingleMonth(m.month)}
+                                className="px-2 py-1 text-[11px] font-medium text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded border border-blue-200 transition-colors"
+                              >
+                                Filter Month
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
 
             {/* Source Ingestion Summary */}
             <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-xs">
@@ -234,7 +621,11 @@ export default function ReportDetailPage() {
 
         {/* TAB 2: RECORDS DATA GRID */}
         {activeTab === 'records' && (
-          <RecordDataGrid reportId={report._id} />
+          <RecordDataGrid
+            reportId={report._id}
+            initialDateFrom={gridDateFrom}
+            initialDateTo={gridDateTo}
+          />
         )}
 
         {/* TAB 3: LIVE PDF VIEWER & TEMPLATE CUSTOMIZER */}

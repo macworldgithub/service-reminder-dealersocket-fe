@@ -41,6 +41,8 @@ export interface Report {
   reportDateFrom?: string;
   reportDateTo?: string;
   recordCount: number;
+  totalRevenue?: number;
+  avgRoAmount?: number;
   status: 'DRAFT' | 'PARSED' | 'MAPPED' | 'IMPORTED' | 'ARCHIVED' | 'FAILED';
   columnMappings: ColumnMappingItem[];
   originalHeaders: string[];
@@ -50,6 +52,32 @@ export interface Report {
   parentReportId?: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface MonthlyRevenueBreakdown {
+  month: string;
+  label: string;
+  year: number;
+  revenue: number;
+  count: number;
+  avgRo: number;
+}
+
+export interface RevenueLookupResult {
+  reportId: string;
+  reportName: string;
+  totalRevenue: number;
+  totalRecords: number;
+  overallAvgRo: number;
+  filteredRevenue: number;
+  filteredCount: number;
+  filteredAvgRoAmount: number;
+  percentageOfTotal: number;
+  minCloseDate?: string | null;
+  maxCloseDate?: string | null;
+  minRoAmount: number;
+  maxRoAmount: number;
+  monthlyBreakdown: MonthlyRevenueBreakdown[];
 }
 
 export interface Vehicle {

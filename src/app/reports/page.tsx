@@ -18,6 +18,8 @@ import {
   Clock,
   X,
   Sparkles,
+  DollarSign,
+  TrendingUp,
 } from 'lucide-react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Button } from '@/components/common/Button';
@@ -27,11 +29,12 @@ import { BatchUploadModal } from '@/components/common/BatchUploadModal';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/authContext';
 import { Report } from '@/lib/types';
-import { formatDate } from '@/lib/utils';
+import { formatDate, formatCurrency } from '@/lib/utils';
 
 export default function ReportsPage() {
   const { activeDealership, user } = useAuth();
   const [reports, setReports] = useState<Report[]>([]);
+  const [totalTrackedRevenue, setTotalTrackedRevenue] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
@@ -64,6 +67,9 @@ export default function ReportsPage() {
       const res = await api.get(`/reports?${params.toString()}`);
       if (res.data?.success) {
         setReports(res.data.data || []);
+        if (res.data.meta?.totalTrackedRevenue !== undefined) {
+          setTotalTrackedRevenue(res.data.meta.totalTrackedRevenue);
+        }
       }
     } catch (err) {
       console.error('Failed to load reports', err);
@@ -116,16 +122,30 @@ export default function ReportsPage() {
     }
   };
 
-  const handleQuickDatePreset = (preset: 'all' | 'sep2026' | 'oct2026') => {
+  const handleQuickDatePreset = (
+    preset: 'all' | '2025' | '2026' | 'q1_2025' | 'q2_2025' | 'q3_2025' | 'q4_2025'
+  ) => {
     if (preset === 'all') {
       setDateFromFilter('');
       setDateToFilter('');
-    } else if (preset === 'sep2026') {
-      setDateFromFilter('2026-09-01');
-      setDateToFilter('2026-09-30');
-    } else if (preset === 'oct2026') {
-      setDateFromFilter('2026-10-01');
-      setDateToFilter('2026-10-31');
+    } else if (preset === '2025') {
+      setDateFromFilter('2025-01-01');
+      setDateToFilter('2025-12-31');
+    } else if (preset === '2026') {
+      setDateFromFilter('2026-01-01');
+      setDateToFilter('2026-12-31');
+    } else if (preset === 'q1_2025') {
+      setDateFromFilter('2025-01-01');
+      setDateToFilter('2025-03-31');
+    } else if (preset === 'q2_2025') {
+      setDateFromFilter('2025-04-01');
+      setDateToFilter('2025-06-30');
+    } else if (preset === 'q3_2025') {
+      setDateFromFilter('2025-07-01');
+      setDateToFilter('2025-09-30');
+    } else if (preset === 'q4_2025') {
+      setDateFromFilter('2025-10-01');
+      setDateToFilter('2025-12-31');
     }
   };
 
@@ -209,11 +229,11 @@ export default function ReportsPage() {
           </div>
 
           {/* Quick Date Range Chips */}
-          <div className="flex items-center gap-2 text-xs pt-1 border-t border-slate-100">
-            <span className="text-slate-500 font-medium text-[11px]">Quick Date Filter:</span>
+          <div className="flex flex-wrap items-center gap-1.5 text-xs pt-2 border-t border-slate-100">
+            <span className="text-slate-500 font-medium text-[11px] mr-1">Quick Date Presets:</span>
             <button
               onClick={() => handleQuickDatePreset('all')}
-              className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
+              className={`px-2.5 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
                 !dateFromFilter && !dateToFilter
                   ? 'bg-blue-600 text-white'
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
@@ -222,25 +242,102 @@ export default function ReportsPage() {
               All Time
             </button>
             <button
-              onClick={() => handleQuickDatePreset('sep2026')}
-              className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
-                dateFromFilter === '2026-09-01'
+              onClick={() => handleQuickDatePreset('2025')}
+              className={`px-2.5 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
+                dateFromFilter === '2025-01-01' && dateToFilter === '2025-12-31'
                   ? 'bg-blue-600 text-white'
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
               }`}
             >
-              September 2026
+              Year 2025
             </button>
             <button
-              onClick={() => handleQuickDatePreset('oct2026')}
-              className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
-                dateFromFilter === '2026-10-01'
+              onClick={() => handleQuickDatePreset('2026')}
+              className={`px-2.5 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
+                dateFromFilter === '2026-01-01' && dateToFilter === '2026-12-31'
                   ? 'bg-blue-600 text-white'
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
               }`}
             >
-              October 2026
+              Year 2026
             </button>
+            <button
+              onClick={() => handleQuickDatePreset('q1_2025')}
+              className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
+                dateFromFilter === '2025-01-01' && dateToFilter === '2025-03-31'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              }`}
+            >
+              Q1 2025
+            </button>
+            <button
+              onClick={() => handleQuickDatePreset('q2_2025')}
+              className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
+                dateFromFilter === '2025-04-01' && dateToFilter === '2025-06-30'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              }`}
+            >
+              Q2 2025
+            </button>
+            <button
+              onClick={() => handleQuickDatePreset('q3_2025')}
+              className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
+                dateFromFilter === '2025-07-01' && dateToFilter === '2025-09-30'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              }`}
+            >
+              Q3 2025
+            </button>
+            <button
+              onClick={() => handleQuickDatePreset('q4_2025')}
+              className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
+                dateFromFilter === '2025-10-01' && dateToFilter === '2025-12-31'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              }`}
+            >
+              Q4 2025
+            </button>
+          </div>
+        </div>
+
+        {/* Aggregate Revenue & Batch Summary Bar */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="bg-white p-3 rounded-lg border border-slate-200 shadow-2xs flex items-center justify-between">
+            <div>
+              <span className="text-[11px] font-medium text-slate-500 uppercase">Filtered Reports</span>
+              <div className="text-lg font-bold text-slate-900 mt-0.5">{reports.length} Reports</div>
+            </div>
+            <div className="w-8 h-8 rounded-md bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
+              {reports.length}
+            </div>
+          </div>
+
+          <div className="bg-white p-3 rounded-lg border border-emerald-200 bg-emerald-50/20 shadow-2xs flex items-center justify-between">
+            <div>
+              <span className="text-[11px] font-semibold text-emerald-800 uppercase">Total Tracked Revenue</span>
+              <div className="text-lg font-black text-emerald-700 font-mono mt-0.5">
+                {formatCurrency(totalTrackedRevenue)}
+              </div>
+            </div>
+            <div className="w-8 h-8 rounded-md bg-emerald-100 text-emerald-700 flex items-center justify-center">
+              <DollarSign className="w-4 h-4" />
+            </div>
+          </div>
+
+          <div className="bg-white p-3 rounded-lg border border-slate-200 shadow-2xs flex items-center justify-between">
+            <div>
+              <span className="text-[11px] font-medium text-slate-500 uppercase">Total Repair Order Rows</span>
+              <div className="text-lg font-bold text-slate-900 mt-0.5">
+                {reports.reduce((acc, r) => acc + (r.recordCount || 0), 0).toLocaleString()} Records
+              </div>
+            </div>
+            <div className="w-8 h-8 rounded-md bg-slate-100 text-slate-700 flex items-center justify-center">
+              <Layers className="w-4 h-4" />
+            </div>
           </div>
         </div>
 
@@ -253,7 +350,8 @@ export default function ReportsPage() {
                   <th className="py-3 px-4">Report &amp; Source Document</th>
                   <th className="py-3 px-4">Service Coverage Period</th>
                   <th className="py-3 px-4">Campaign</th>
-                  <th className="py-3 px-4">Records</th>
+                  <th className="py-3 px-4 text-right">Tracked Revenue</th>
+                  <th className="py-3 px-4 text-right">Records</th>
                   <th className="py-3 px-4">Uploaded</th>
                   <th className="py-3 px-4">Status</th>
                   <th className="py-3 px-4 text-right">Actions</th>
@@ -262,13 +360,13 @@ export default function ReportsPage() {
               <tbody className="divide-y divide-slate-100">
                 {isLoading ? (
                   <tr>
-                    <td colSpan={7} className="py-8 text-center text-slate-400">
+                    <td colSpan={8} className="py-8 text-center text-slate-400">
                       Loading reports...
                     </td>
                   </tr>
                 ) : reports.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="py-12 text-center">
+                    <td colSpan={8} className="py-12 text-center">
                       <FileSpreadsheet className="w-10 h-10 text-slate-300 mx-auto mb-2" />
                       <div className="text-sm font-medium text-slate-700">No reports found</div>
                       <p className="text-xs text-slate-400 mt-0.5">
@@ -330,8 +428,20 @@ export default function ReportsPage() {
                           {r.campaignName || '—'}
                         </td>
 
-                        <td className="py-3 px-4 font-bold text-slate-900">
-                          {r.recordCount}
+                        {/* Tracked Revenue Column */}
+                        <td className="py-3 px-4 text-right">
+                          <div className="font-bold text-slate-900 font-mono text-xs">
+                            {formatCurrency(r.totalRevenue || 0)}
+                          </div>
+                          {r.avgRoAmount ? (
+                            <div className="text-[11px] text-slate-400 font-mono">
+                              avg {formatCurrency(r.avgRoAmount)}
+                            </div>
+                          ) : null}
+                        </td>
+
+                        <td className="py-3 px-4 font-bold text-slate-900 text-right">
+                          {r.recordCount.toLocaleString()}
                         </td>
 
                         <td className="py-3 px-4 text-slate-500">

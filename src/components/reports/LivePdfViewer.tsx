@@ -180,18 +180,29 @@ export const LivePdfViewer: React.FC<LivePdfViewerProps> = ({ report, records })
     });
   }, [records, dateFilterFrom, dateFilterTo]);
 
-  // Load saved columns on mount from localStorage or saved template
+  // Load saved columns and custom PDF layout on mount from localStorage
   useEffect(() => {
     try {
-      const saved = localStorage.getItem(`dealersocket_pdf_columns_${report._id}`);
-      if (saved) {
-        const parsed = JSON.parse(saved);
+      const savedCols = localStorage.getItem(`dealersocket_pdf_columns_${report._id}`);
+      if (savedCols) {
+        const parsed = JSON.parse(savedCols);
         if (Array.isArray(parsed) && parsed.length > 0) {
           setColumns(parsed);
         }
       }
+
+      const savedSettings = localStorage.getItem(`dealersocket_pdf_settings_${report._id}`);
+      if (savedSettings) {
+        const parsed = JSON.parse(savedSettings);
+        if (parsed.reportTitle) setReportTitle(parsed.reportTitle);
+        if (parsed.subtitle) setSubtitle(parsed.subtitle);
+        if (parsed.headerDealershipName) setHeaderDealership(parsed.headerDealershipName);
+        if (parsed.campaignLabel) setCampaignLabel(parsed.campaignLabel);
+        if (parsed.primaryColor) setPrimaryColor(parsed.primaryColor);
+        if (parsed.footerNotes) setFooterNotes(parsed.footerNotes);
+      }
     } catch (e) {
-      console.error('Failed to load saved PDF columns', e);
+      console.error('Failed to load saved PDF settings', e);
     }
   }, [report._id]);
 
@@ -412,34 +423,40 @@ export const LivePdfViewer: React.FC<LivePdfViewerProps> = ({ report, records })
     }
   };
 
-  const handleSaveTemplate = async () => {
+  const handleSaveLayout = () => {
     try {
-      const dealershipId =
-        typeof report.dealershipId === 'object' ? (report.dealershipId as any)._id : report.dealershipId;
+      const layoutSettings = {
+        reportTitle,
+        subtitle,
+        headerDealershipName: headerDealership,
+        campaignLabel,
+        primaryColor,
+        footerNotes,
+      };
 
-      await api.post('/templates', {
-        dealershipId,
-        name: `${report.name} PDF Template`,
-        type: 'PDF',
-        pdfSettings: {
-          reportTitle,
-          subtitle,
-          headerDealershipName: headerDealership,
-          campaignLabel,
-          dateRangeText,
-          primaryColor,
-          columns: columns.map((c) => ({
-            field: c.key,
-            label: c.label,
-            visible: c.visible,
-          })),
-          footerNotes,
-        },
-      });
+      localStorage.setItem(`dealersocket_pdf_settings_${report._id}`, JSON.stringify(layoutSettings));
+      localStorage.setItem(`dealersocket_pdf_columns_${report._id}`, JSON.stringify(columns));
+
+      // Also automatically synchronize with the Record section!
+      const activeKeys = new Set(columns.filter((c) => c.visible).map((c) => c.key));
+      const recordCols = {
+        entityId: activeKeys.has('externalEntityId'),
+        customer: activeKeys.has('customerName'),
+        email: activeKeys.has('customerEmail') || activeKeys.has('email'),
+        vehicle: Array.from(activeKeys).some((k) => k.startsWith('vehicle')),
+        campaign: activeKeys.has('campaignName'),
+        eventNumber: activeKeys.has('eventNumber'),
+        closeDate: activeKeys.has('closeDate'),
+        roAmount: activeKeys.has('roAmount'),
+        status: true,
+      };
+      localStorage.setItem(`dealersocket_record_columns_${report._id}`, JSON.stringify(recordCols));
+      window.dispatchEvent(new CustomEvent('columns-updated', { detail: recordCols }));
+
       setIsTemplateSaved(true);
       setTimeout(() => setIsTemplateSaved(false), 2500);
     } catch (err) {
-      console.error('Template save failed', err);
+      console.error('Failed to save layout', err);
     }
   };
 
@@ -485,10 +502,11 @@ export const LivePdfViewer: React.FC<LivePdfViewerProps> = ({ report, records })
           <Button
             variant="outline"
             size="sm"
-            onClick={handleSaveTemplate}
+            onClick={handleSaveLayout}
             icon={isTemplateSaved ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Save className="w-3.5 h-3.5" />}
+            title="Save custom layout and column settings for this report"
           >
-            {isTemplateSaved ? 'Saved!' : 'Save Template'}
+            {isTemplateSaved ? 'Layout Saved!' : 'Save Layout'}
           </Button>
 
           <Button

@@ -16,8 +16,8 @@ import {
   FileSpreadsheet,
   AlertCircle,
   Eye,
-  Sparkles,
   Mail,
+  DollarSign,
 } from 'lucide-react';
 import { ReportRecord } from '@/lib/types';
 import { Badge } from '@/components/common/Badge';
@@ -29,23 +29,37 @@ import { api } from '@/lib/api';
 
 interface RecordDataGridProps {
   reportId: string;
+  initialDateFrom?: string;
+  initialDateTo?: string;
 }
 
-export const RecordDataGrid: React.FC<RecordDataGridProps> = ({ reportId }) => {
+export const RecordDataGrid: React.FC<RecordDataGridProps> = ({
+  reportId,
+  initialDateFrom = '',
+  initialDateTo = '',
+}) => {
   const [records, setRecords] = useState<ReportRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [totalCount, setTotalCount] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(25);
+  const [filteredRevenue, setFilteredRevenue] = useState<number | null>(null);
+  const [filteredAvgRo, setFilteredAvgRo] = useState<number | null>(null);
 
   // Filters & Search
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [sortBy, setSortBy] = useState('createdAt');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
-  const [dateFrom, setDateFrom] = useState('');
-  const [dateTo, setDateTo] = useState('');
+  const [dateFrom, setDateFrom] = useState(initialDateFrom);
+  const [dateTo, setDateTo] = useState(initialDateTo);
+
+  // Update dates if initial props change
+  useEffect(() => {
+    if (initialDateFrom) setDateFrom(initialDateFrom);
+    if (initialDateTo) setDateTo(initialDateTo);
+  }, [initialDateFrom, initialDateTo]);
 
   // Selected rows
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -64,7 +78,6 @@ export const RecordDataGrid: React.FC<RecordDataGridProps> = ({ reportId }) => {
   const [newRoAmount, setNewRoAmount] = useState('350.00');
   const [newCloseDate, setNewCloseDate] = useState('2026-10-01');
   const [isCreating, setIsCreating] = useState(false);
-  const [isPopulatingEmails, setIsPopulatingEmails] = useState(false);
 
   // Inline editing state
   const [editingRowId, setEditingRowId] = useState<string | null>(null);
@@ -158,6 +171,10 @@ export const RecordDataGrid: React.FC<RecordDataGridProps> = ({ reportId }) => {
         if (res.data.meta) {
           setTotalCount(res.data.meta.total);
           setTotalPages(res.data.meta.totalPages);
+          if (res.data.meta.filteredRevenue !== undefined) {
+            setFilteredRevenue(res.data.meta.filteredRevenue);
+            setFilteredAvgRo(res.data.meta.filteredAvgRo);
+          }
         }
       }
     } catch (err) {
@@ -242,19 +259,6 @@ export const RecordDataGrid: React.FC<RecordDataGridProps> = ({ reportId }) => {
       fetchRecords();
     } catch (err) {
       console.error('Inline edit save failed', err);
-    }
-  };
-
-  const handlePopulateEmails = async () => {
-    if (!confirm('Auto-fill formatted customer emails (e.g. name@gmail.com) for all rows missing email in this report?')) return;
-    setIsPopulatingEmails(true);
-    try {
-      await api.post(`/reports/${reportId}/records/populate-emails`);
-      await fetchRecords();
-    } catch (err) {
-      console.error('Failed to populate emails', err);
-    } finally {
-      setIsPopulatingEmails(false);
     }
   };
 
@@ -352,6 +356,21 @@ export const RecordDataGrid: React.FC<RecordDataGridProps> = ({ reportId }) => {
               </button>
             )}
           </div>
+
+          {/* Filtered Revenue Display */}
+          {filteredRevenue !== null && (
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 shadow-2xs font-medium">
+              <DollarSign className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+              <span>
+                Filtered RO: <strong>{formatCurrency(filteredRevenue)}</strong>
+              </span>
+              {filteredAvgRo !== null && filteredAvgRo > 0 && (
+                <span className="text-emerald-700 font-mono text-[11px]">
+                  (avg {formatCurrency(filteredAvgRo)})
+                </span>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="flex items-center gap-2">
@@ -402,17 +421,6 @@ export const RecordDataGrid: React.FC<RecordDataGridProps> = ({ reportId }) => {
               </div>
             )}
           </div>
-
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handlePopulateEmails}
-            isLoading={isPopulatingEmails}
-            icon={<Sparkles className="w-3.5 h-3.5 text-indigo-600" />}
-            title="Auto-fill customer emails for any rows missing an email"
-          >
-            Auto-Fill Emails
-          </Button>
 
           <a href={`/api/reports/${reportId}/export/csv`} download>
             <Button variant="outline" size="sm" icon={<Download className="w-3.5 h-3.5" />}>
