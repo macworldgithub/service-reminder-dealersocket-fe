@@ -36,6 +36,7 @@ import { LivePdfViewer } from '@/components/reports/LivePdfViewer';
 import { api } from '@/lib/api';
 import { Report, ReportRecord, AuditLog, RevenueLookupResult } from '@/lib/types';
 import { formatCurrency, formatDate } from '@/lib/utils';
+import { downloadAuthenticatedFile } from '@/lib/download';
 
 export default function ReportDetailPage() {
   const params = useParams();
@@ -56,6 +57,40 @@ export default function ReportDetailPage() {
   const [isLookupLoading, setIsLookupLoading] = useState(false);
   const [gridDateFrom, setGridDateFrom] = useState('');
   const [gridDateTo, setGridDateTo] = useState('');
+  const [isExportingPdf, setIsExportingPdf] = useState(false);
+  const [isExportingExcel, setIsExportingExcel] = useState(false);
+
+  const handleExportPdf = async () => {
+    if (!report) return;
+    setIsExportingPdf(true);
+    try {
+      await downloadAuthenticatedFile({
+        url: `/api/reports/${id}/pdf`,
+        filename: `${report.name || 'DealerSocket_Report'}.pdf`,
+        method: 'GET',
+      });
+    } catch (err: any) {
+      alert('Failed to export PDF: ' + (err.message || 'Please check connection.'));
+    } finally {
+      setIsExportingPdf(false);
+    }
+  };
+
+  const handleExportExcel = async () => {
+    if (!report) return;
+    setIsExportingExcel(true);
+    try {
+      await downloadAuthenticatedFile({
+        url: `/api/reports/${id}/export/xlsx`,
+        filename: `${report.name || 'DealerSocket_Report'}.xlsx`,
+        method: 'GET',
+      });
+    } catch (err: any) {
+      alert('Failed to export Excel: ' + (err.message || 'Please check connection.'));
+    } finally {
+      setIsExportingExcel(false);
+    }
+  };
 
   // Tabs
   const [activeTab, setActiveTab] = useState<'overview' | 'records' | 'pdf' | 'mappings' | 'audit'>('records');
@@ -219,22 +254,30 @@ export default function ReportDetailPage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2 self-end md:self-center">
-            <a href={`/api/reports/${id}/pdf`} target="_blank" rel="noreferrer">
-              <Button variant="outline" size="sm" icon={<Download className="w-3.5 h-3.5" />}>
-                Export PDF
-              </Button>
-            </a>
-            <a href={`/api/reports/${id}/export/xlsx`} download>
-              <Button variant="outline" size="sm" icon={<FileSpreadsheet className="w-3.5 h-3.5" />}>
-                Export Excel
-              </Button>
-            </a>
+          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-end">
+            <Button
+              variant="outline"
+              size="sm"
+              isLoading={isExportingPdf}
+              onClick={handleExportPdf}
+              icon={<Download className="w-3.5 h-3.5" />}
+            >
+              Export PDF
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              isLoading={isExportingExcel}
+              onClick={handleExportExcel}
+              icon={<FileSpreadsheet className="w-3.5 h-3.5" />}
+            >
+              Export Excel
+            </Button>
           </div>
         </div>
 
         {/* 5 Tab Navigation Bar */}
-        <div className="flex border-b border-slate-200 bg-white rounded-t-lg px-4 text-xs font-medium">
+        <div className="flex border-b border-slate-200 bg-white rounded-t-lg px-2 sm:px-4 text-xs font-medium overflow-x-auto scrollbar-thin">
           {[
             { key: 'overview', label: 'Overview' },
             { key: 'records', label: `Records (${report.recordCount})` },
@@ -245,7 +288,7 @@ export default function ReportDetailPage() {
             <button
               key={tab.key}
               onClick={() => setActiveTab(tab.key as any)}
-              className={`py-3 px-4 border-b-2 transition-colors cursor-pointer ${
+              className={`py-3 px-4 border-b-2 transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
                 activeTab === tab.key
                   ? 'border-blue-600 text-blue-600 font-semibold'
                   : 'border-transparent text-slate-500 hover:text-slate-800'
@@ -259,8 +302,8 @@ export default function ReportDetailPage() {
         {/* TAB 1: OVERVIEW */}
         {activeTab === 'overview' && (
           <div className="space-y-6">
-            {/* 4 Standard Summary Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Summary Metrics Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-xs">
                 <span className="text-xs text-slate-500 uppercase font-medium">Total Revenue Tracked</span>
                 <div className="text-xl font-bold text-slate-900 mt-1 font-mono">
@@ -281,13 +324,6 @@ export default function ReportDetailPage() {
                   {stats?.validRecords || 0}
                 </div>
                 <div className="text-[11px] text-slate-400 mt-0.5">Passing all business rules</div>
-              </div>
-              <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-xs">
-                <span className="text-xs text-slate-500 uppercase font-medium">Warnings / Flags</span>
-                <div className="text-xl font-bold text-amber-600 mt-1">
-                  {stats?.warningRecords || 0}
-                </div>
-                <div className="text-[11px] text-slate-400 mt-0.5">Potential duplicate/date checks</div>
               </div>
             </div>
 

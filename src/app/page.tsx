@@ -23,6 +23,7 @@ import { Button } from '@/components/common/Button';
 import { Badge } from '@/components/common/Badge';
 import { BatchUploadModal } from '@/components/common/BatchUploadModal';
 import { api } from '@/lib/api';
+import { downloadAuthenticatedFile } from '@/lib/download';
 import { useAuth } from '@/lib/authContext';
 import { Report, ImportSession } from '@/lib/types';
 import { formatCurrency, formatDate } from '@/lib/utils';
@@ -273,11 +274,20 @@ export default function DashboardPage() {
                               <Eye className="w-3.5 h-3.5 mr-1" /> View
                             </Button>
                           </Link>
-                          <a href={`/api/reports/${r._id}/pdf`} target="_blank" rel="noreferrer">
-                            <Button variant="ghost" size="sm" className="h-7 px-2 text-slate-600">
-                              <Download className="w-3.5 h-3.5" />
-                            </Button>
-                          </a>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 px-2 text-slate-600"
+                            onClick={() => {
+                              downloadAuthenticatedFile({
+                                url: `/api/reports/${r._id}/pdf`,
+                                filename: `${r.name || 'DealerSocket_Report'}.pdf`,
+                                method: 'GET',
+                              }).catch((err) => alert('Failed to export PDF: ' + err.message));
+                            }}
+                          >
+                            <Download className="w-3.5 h-3.5" />
+                          </Button>
                         </div>
                       </td>
                     </tr>

@@ -15,6 +15,8 @@ import {
   Filter,
   Layers,
   Sparkles,
+  CheckCircle2,
+  AlertCircle,
 } from 'lucide-react';
 import { Report, ReportRecord } from '@/lib/types';
 import { Button } from '@/components/common/Button';
@@ -22,6 +24,7 @@ import { Badge } from '@/components/common/Badge';
 import { Modal } from '@/components/common/Modal';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { api } from '@/lib/api';
+import { downloadAuthenticatedFile } from '@/lib/download';
 
 interface LivePdfViewerProps {
   report: Report;
@@ -52,6 +55,7 @@ export const LivePdfViewer: React.FC<LivePdfViewerProps> = ({ report, records })
   const [footerNotes, setFooterNotes] = useState('DealerSocket Operations Hub - Confidential');
   const [isDownloading, setIsDownloading] = useState(false);
   const [isTemplateSaved, setIsTemplateSaved] = useState(false);
+  const [downloadStatus, setDownloadStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   // Date Filtering State
   const [dateFilterFrom, setDateFilterFrom] = useState('');
@@ -369,17 +373,13 @@ export const LivePdfViewer: React.FC<LivePdfViewerProps> = ({ report, records })
   // Download PDF handler with date range and customized columns
   const handleDownloadPdf = async () => {
     setIsDownloading(true);
+    setDownloadStatus(null);
     try {
-      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-      };
-      if (token) headers['Authorization'] = `Bearer ${token}`;
-
-      const response = await fetch(`/api/reports/${report._id}/pdf`, {
+      await downloadAuthenticatedFile({
+        url: `/reports/${report._id}/pdf`,
+        filename: `${report.name || 'DealerSocket_Report'}.pdf`,
         method: 'POST',
-        headers,
-        body: JSON.stringify({
+        body: {
           dateFrom: dateFilterFrom || undefined,
           dateTo: dateFilterTo || undefined,
           templateSettings: {
@@ -396,28 +396,21 @@ export const LivePdfViewer: React.FC<LivePdfViewerProps> = ({ report, records })
             })),
             footerNotes,
           },
-        }),
+        },
       });
-
-      if (!response.ok) {
-        throw new Error(`Failed to generate PDF: ${response.statusText}`);
-      }
-
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${report.name || 'DealerSocket_Report'}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-    } catch (err) {
+      setDownloadStatus({
+        type: 'success',
+        message: 'PDF report generated and downloaded successfully!',
+      });
+      setTimeout(() => setDownloadStatus(null), 5000);
+    } catch (err: any) {
       console.error('PDF download failed', err);
-      // Fallback direct download
-      const queryParams = new URLSearchParams();
-      if (dateFilterFrom) queryParams.append('dateFrom', dateFilterFrom);
-      if (dateFilterTo) queryParams.append('dateTo', dateFilterTo);
-      window.open(`/api/reports/${report._id}/pdf?${queryParams.toString()}`, '_blank');
+      setDownloadStatus({
+        type: 'error',
+        message:
+          'Failed to download PDF report: ' +
+          (err.response?.data?.message || err.message || 'Request failed. Please verify authentication.'),
+      });
     } finally {
       setIsDownloading(false);
     }
@@ -465,25 +458,26 @@ export const LivePdfViewer: React.FC<LivePdfViewerProps> = ({ report, records })
   return (
     <div className="space-y-4">
       {/* Top Controls Bar */}
-      <div className="bg-white p-3 rounded-lg border border-slate-200 shadow-xs flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <Badge variant="default" className="font-semibold bg-slate-800 text-white">
+      <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge variant="default" className="font-semibold bg-slate-800 text-white shrink-0">
             Interactive PDF Document
           </Badge>
-          <span className="text-xs text-slate-500 font-medium">
+          <span className="text-xs text-slate-500 font-medium whitespace-nowrap">
             Showing <strong className="text-blue-600">{filteredRecords.length}</strong> of {records.length} records
           </span>
           {(dateFilterFrom || dateFilterTo) && (
-            <span className="text-[11px] bg-amber-50 text-amber-700 px-2 py-0.5 rounded border border-amber-200 font-medium">
+            <span className="text-[11px] bg-amber-50 text-amber-700 px-2 py-0.5 rounded border border-amber-200 font-medium shrink-0">
               Date Filtered
             </span>
           )}
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
           <Button
             variant="outline"
             size="sm"
+            className="flex-1 sm:flex-none text-xs"
             onClick={() => setIsAddFieldModalOpen(true)}
             icon={<Plus className="w-3.5 h-3.5 text-blue-600" />}
           >
@@ -493,6 +487,7 @@ export const LivePdfViewer: React.FC<LivePdfViewerProps> = ({ report, records })
           <Button
             variant="outline"
             size="sm"
+            className="flex-1 sm:flex-none text-xs"
             onClick={() => setShowConfigDrawer(!showConfigDrawer)}
             icon={<Sliders className="w-3.5 h-3.5" />}
           >
@@ -502,6 +497,7 @@ export const LivePdfViewer: React.FC<LivePdfViewerProps> = ({ report, records })
           <Button
             variant="outline"
             size="sm"
+            className="flex-1 sm:flex-none text-xs"
             onClick={handleSaveLayout}
             icon={isTemplateSaved ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Save className="w-3.5 h-3.5" />}
             title="Save custom layout and column settings for this report"
@@ -511,6 +507,7 @@ export const LivePdfViewer: React.FC<LivePdfViewerProps> = ({ report, records })
 
           <Button
             size="sm"
+            className="flex-1 sm:flex-none text-xs font-semibold shadow-xs"
             isLoading={isDownloading}
             onClick={handleDownloadPdf}
             icon={<Download className="w-3.5 h-3.5" />}
@@ -520,15 +517,41 @@ export const LivePdfViewer: React.FC<LivePdfViewerProps> = ({ report, records })
         </div>
       </div>
 
+      {/* Download Feedback Banner */}
+      {downloadStatus && (
+        <div
+          className={`p-3 rounded-xl text-xs flex items-center justify-between border transition-all shadow-xs ${
+            downloadStatus.type === 'success'
+              ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
+              : 'bg-rose-50 border-rose-200 text-rose-900'
+          }`}
+        >
+          <div className="flex items-center gap-2.5">
+            {downloadStatus.type === 'success' ? (
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+            ) : (
+              <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+            )}
+            <span className="font-medium">{downloadStatus.message}</span>
+          </div>
+          <button
+            onClick={() => setDownloadStatus(null)}
+            className="text-slate-400 hover:text-slate-600 p-1"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
+
       {/* Date Filter Bar */}
-      <div className="bg-white p-3 rounded-lg border border-slate-200 shadow-xs flex flex-wrap items-center justify-between gap-3 text-xs">
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1.5 font-semibold text-slate-700">
+      <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-3 text-xs">
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-1.5 font-semibold text-slate-700 shrink-0">
             <Filter className="w-3.5 h-3.5 text-blue-600" />
             <span>Filter PDF by Date:</span>
           </div>
 
-          <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded-md">
+          <div className="flex flex-wrap items-center gap-1 bg-slate-100 p-0.5 rounded-lg">
             <button
               onClick={() => handleDatePreset('all')}
               className={`px-2.5 py-1 rounded text-[11px] font-medium transition-colors ${
@@ -573,9 +596,9 @@ export const LivePdfViewer: React.FC<LivePdfViewerProps> = ({ report, records })
         </div>
 
         {/* Date Inputs */}
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1.5">
-            <label className="text-slate-500 font-medium">From:</label>
+        <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
+          <div className="flex items-center gap-1.5 flex-1 sm:flex-none">
+            <label className="text-slate-500 font-medium shrink-0">From:</label>
             <input
               type="date"
               value={dateFilterFrom}
@@ -583,12 +606,12 @@ export const LivePdfViewer: React.FC<LivePdfViewerProps> = ({ report, records })
                 setDateFilterFrom(e.target.value);
                 setActiveDatePreset('custom');
               }}
-              className="px-2 py-1 border border-slate-300 rounded text-xs bg-white text-slate-800"
+              className="w-full sm:w-auto px-2 py-1 border border-slate-300 rounded text-xs bg-white text-slate-800"
             />
           </div>
 
-          <div className="flex items-center gap-1.5">
-            <label className="text-slate-500 font-medium">To:</label>
+          <div className="flex items-center gap-1.5 flex-1 sm:flex-none">
+            <label className="text-slate-500 font-medium shrink-0">To:</label>
             <input
               type="date"
               value={dateFilterTo}
@@ -596,14 +619,14 @@ export const LivePdfViewer: React.FC<LivePdfViewerProps> = ({ report, records })
                 setDateFilterTo(e.target.value);
                 setActiveDatePreset('custom');
               }}
-              className="px-2 py-1 border border-slate-300 rounded text-xs bg-white text-slate-800"
+              className="w-full sm:w-auto px-2 py-1 border border-slate-300 rounded text-xs bg-white text-slate-800"
             />
           </div>
 
           {(dateFilterFrom || dateFilterTo) && (
             <button
               onClick={() => handleDatePreset('all')}
-              className="flex items-center gap-1 text-[11px] text-rose-600 hover:text-rose-700 font-medium ml-1"
+              className="flex items-center gap-1 text-[11px] text-rose-600 hover:text-rose-700 font-medium px-2 py-1 rounded hover:bg-rose-50 transition ml-auto sm:ml-0"
             >
               <X className="w-3 h-3" />
               Reset Date
@@ -771,22 +794,22 @@ export const LivePdfViewer: React.FC<LivePdfViewerProps> = ({ report, records })
         )}
 
         {/* Live Visual PDF Sheet Canvas (3 or 4 Cols) */}
-        <div className={`${showConfigDrawer ? 'lg:col-span-3' : 'lg:col-span-4'} flex justify-center`}>
-          <div className="w-full max-w-4xl bg-white rounded-lg border border-slate-300 shadow-md p-8 min-h-[900px] flex flex-col justify-between font-sans">
+        <div className={`${showConfigDrawer ? 'lg:col-span-3' : 'lg:col-span-4'} flex justify-center w-full min-w-0 overflow-hidden`}>
+          <div className="w-full max-w-5xl bg-white rounded-xl border border-slate-300 shadow-md p-4 sm:p-6 md:p-8 min-h-[700px] flex flex-col justify-between font-sans overflow-hidden">
             {/* Printable PDF Header */}
             <div>
               <div
-                className="p-5 rounded-md border border-slate-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6"
+                className="p-4 sm:p-5 rounded-lg border border-slate-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6"
                 style={{ backgroundColor: '#f8fafc', borderLeft: `5px solid ${primaryColor}` }}
               >
-                <div>
-                  <h1 className="text-xl font-bold tracking-tight" style={{ color: primaryColor }}>
+                <div className="min-w-0">
+                  <h1 className="text-lg sm:text-xl font-bold tracking-tight truncate" style={{ color: primaryColor }}>
                     {reportTitle}
                   </h1>
-                  {subtitle && <p className="text-xs text-slate-500 font-medium">{subtitle}</p>}
+                  {subtitle && <p className="text-xs text-slate-500 font-medium truncate">{subtitle}</p>}
                 </div>
 
-                <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-xs">
+                <div className="grid grid-cols-2 gap-x-4 sm:gap-x-6 gap-y-1 text-xs shrink-0">
                   <div>
                     <span className="font-semibold text-slate-600">Report:</span>{' '}
                     <span className="text-slate-900 font-medium">{headerDealership}</span>
@@ -807,8 +830,8 @@ export const LivePdfViewer: React.FC<LivePdfViewerProps> = ({ report, records })
               </div>
 
               {/* Table rendering matching DealerSocket PDF */}
-              <div className="border border-slate-200 rounded-md overflow-auto max-h-[520px]">
-                <table className="w-full text-left text-xs border-collapse">
+              <div className="border border-slate-200 rounded-lg overflow-x-auto max-h-[550px] shadow-2xs">
+                <table className="w-full text-left text-xs border-collapse min-w-[680px]">
                   <thead className="sticky top-0 z-10">
                     <tr style={{ backgroundColor: primaryColor }} className="text-white font-semibold text-[11px] uppercase tracking-wider shadow-xs">
                       {activeColumns.map((c) => (

@@ -11,7 +11,6 @@ import {
   Settings as SettingsIcon,
   Building2,
   FileText,
-  Sliders,
   Webhook,
   Save,
   CheckCircle2,
@@ -34,7 +33,7 @@ import {
 export default function SettingsPage() {
   const { activeDealership, user } = useAuth();
 
-  const [activeTab, setActiveTab] = useState<'general' | 'dedup' | 'pdf' | 'integrations'>('general');
+  const [activeTab, setActiveTab] = useState<'general' | 'pdf' | 'integrations'>('general');
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [copiedKey, setCopiedKey] = useState(false);
@@ -47,12 +46,6 @@ export default function SettingsPage() {
   const [defaultInterval, setDefaultInterval] = useState('6 Months / 10,000 km');
   const [supportEmail, setSupportEmail] = useState('service@southmoranghyundai.com.au');
   const [supportPhone, setSupportPhone] = useState('+61 3 8401 2200');
-
-  // Deduplication settings state
-  const [dedupKey, setDedupKey] = useState<'eventNumber' | 'vin_roDate' | 'entityId'>('eventNumber');
-  const [dedupAction, setDedupAction] = useState<'flag' | 'skip' | 'overwrite'>('flag');
-  const [autoApproveClean, setAutoApproveClean] = useState(true);
-  const [requireManualReviewOnError, setRequireManualReviewOnError] = useState(true);
 
   // PDF preferences
   const [pdfHeaderTitle, setPdfHeaderTitle] = useState('HY CLOSED RO SERVICE REPORT');
@@ -218,11 +211,11 @@ export default function SettingsPage() {
 
         {/* Tab Navigation */}
         <div className="border-b border-slate-200">
-          <nav className="flex space-x-6 text-xs font-medium">
+          <nav className="flex space-x-4 sm:space-x-6 text-xs font-medium overflow-x-auto scrollbar-thin whitespace-nowrap pb-1">
             <button
               type="button"
               onClick={() => setActiveTab('general')}
-              className={`pb-3 flex items-center gap-2 border-b-2 transition-colors ${
+              className={`pb-3 flex items-center gap-2 border-b-2 transition-colors shrink-0 ${
                 activeTab === 'general'
                   ? 'border-blue-600 text-blue-600 font-semibold'
                   : 'border-transparent text-slate-500 hover:text-slate-800'
@@ -233,20 +226,8 @@ export default function SettingsPage() {
             </button>
             <button
               type="button"
-              onClick={() => setActiveTab('dedup')}
-              className={`pb-3 flex items-center gap-2 border-b-2 transition-colors ${
-                activeTab === 'dedup'
-                  ? 'border-blue-600 text-blue-600 font-semibold'
-                  : 'border-transparent text-slate-500 hover:text-slate-800'
-              }`}
-            >
-              <Sliders className="w-4 h-4" />
-              <span>Deduplication & Validation</span>
-            </button>
-            <button
-              type="button"
               onClick={() => setActiveTab('pdf')}
-              className={`pb-3 flex items-center gap-2 border-b-2 transition-colors ${
+              className={`pb-3 flex items-center gap-2 border-b-2 transition-colors shrink-0 ${
                 activeTab === 'pdf'
                   ? 'border-blue-600 text-blue-600 font-semibold'
                   : 'border-transparent text-slate-500 hover:text-slate-800'
@@ -258,7 +239,7 @@ export default function SettingsPage() {
             <button
               type="button"
               onClick={() => setActiveTab('integrations')}
-              className={`pb-3 flex items-center gap-2 border-b-2 transition-colors ${
+              className={`pb-3 flex items-center gap-2 border-b-2 transition-colors shrink-0 ${
                 activeTab === 'integrations'
                   ? 'border-blue-600 text-blue-600 font-semibold'
                   : 'border-transparent text-slate-500 hover:text-slate-800'
@@ -340,178 +321,6 @@ export default function SettingsPage() {
                     onChange={(e) => setDefaultInterval(e.target.value)}
                     className="w-full text-xs px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
                   />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {activeTab === 'dedup' && (
-            <div className="space-y-6">
-              <div>
-                <h3 className="text-sm font-semibold text-slate-900">Deduplication & Record Integrity</h3>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Controls how duplicate RO records are matched and handled during ingestion.
-                </p>
-              </div>
-
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-2">Unique Deduplication Key</label>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    <label
-                      className={`flex flex-col p-3 rounded-lg border cursor-pointer transition-colors ${
-                        dedupKey === 'eventNumber'
-                          ? 'border-blue-600 bg-blue-50/40 text-blue-900'
-                          : 'border-slate-200 hover:bg-slate-50 text-slate-700'
-                      }`}
-                    >
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="radio"
-                          name="dedupKey"
-                          checked={dedupKey === 'eventNumber'}
-                          onChange={() => setDedupKey('eventNumber')}
-                          className="text-blue-600"
-                        />
-                        <span className="text-xs font-semibold">Event Number (RO#)</span>
-                      </div>
-                      <span className="text-[11px] text-slate-500 mt-1 pl-5">
-                        Matches by unique DealerSocket event ID (e.g. EV-89012). Recommended for accurate closed ROs.
-                      </span>
-                    </label>
-
-                    <label
-                      className={`flex flex-col p-3 rounded-lg border cursor-pointer transition-colors ${
-                        dedupKey === 'vin_roDate'
-                          ? 'border-blue-600 bg-blue-50/40 text-blue-900'
-                          : 'border-slate-200 hover:bg-slate-50 text-slate-700'
-                      }`}
-                    >
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="radio"
-                          name="dedupKey"
-                          checked={dedupKey === 'vin_roDate'}
-                          onChange={() => setDedupKey('vin_roDate')}
-                          className="text-blue-600"
-                        />
-                        <span className="text-xs font-semibold">VIN + RO Close Date</span>
-                      </div>
-                      <span className="text-[11px] text-slate-500 mt-1 pl-5">
-                        Combines Vehicle Identification Number with the closed repair order date.
-                      </span>
-                    </label>
-
-                    <label
-                      className={`flex flex-col p-3 rounded-lg border cursor-pointer transition-colors ${
-                        dedupKey === 'entityId'
-                          ? 'border-blue-600 bg-blue-50/40 text-blue-900'
-                          : 'border-slate-200 hover:bg-slate-50 text-slate-700'
-                      }`}
-                    >
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="radio"
-                          name="dedupKey"
-                          checked={dedupKey === 'entityId'}
-                          onChange={() => setDedupKey('entityId')}
-                          className="text-blue-600"
-                        />
-                        <span className="text-xs font-semibold">Entity ID (Customer)</span>
-                      </div>
-                      <span className="text-[11px] text-slate-500 mt-1 pl-5">
-                        Matches solely by DealerSocket customer Entity ID (e.g. E10481).
-                      </span>
-                    </label>
-                  </div>
-                </div>
-
-                <div className="pt-3 border-t border-slate-100">
-                  <label className="block text-xs font-semibold text-slate-700 mb-2">Duplicate Resolution Action</label>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    <label
-                      className={`flex items-center gap-2.5 p-3 rounded-lg border cursor-pointer transition-colors ${
-                        dedupAction === 'flag'
-                          ? 'border-blue-600 bg-blue-50/40 text-blue-900 font-medium'
-                          : 'border-slate-200 hover:bg-slate-50 text-slate-700'
-                      }`}
-                    >
-                      <input
-                        type="radio"
-                        name="dedupAction"
-                        checked={dedupAction === 'flag'}
-                        onChange={() => setDedupAction('flag')}
-                        className="text-blue-600"
-                      />
-                      <span className="text-xs">Flag as Duplicate for Review</span>
-                    </label>
-
-                    <label
-                      className={`flex items-center gap-2.5 p-3 rounded-lg border cursor-pointer transition-colors ${
-                        dedupAction === 'skip'
-                          ? 'border-blue-600 bg-blue-50/40 text-blue-900 font-medium'
-                          : 'border-slate-200 hover:bg-slate-50 text-slate-700'
-                      }`}
-                    >
-                      <input
-                        type="radio"
-                        name="dedupAction"
-                        checked={dedupAction === 'skip'}
-                        onChange={() => setDedupAction('skip')}
-                        className="text-blue-600"
-                      />
-                      <span className="text-xs">Silently Skip Existing Records</span>
-                    </label>
-
-                    <label
-                      className={`flex items-center gap-2.5 p-3 rounded-lg border cursor-pointer transition-colors ${
-                        dedupAction === 'overwrite'
-                          ? 'border-blue-600 bg-blue-50/40 text-blue-900 font-medium'
-                          : 'border-slate-200 hover:bg-slate-50 text-slate-700'
-                      }`}
-                    >
-                      <input
-                        type="radio"
-                        name="dedupAction"
-                        checked={dedupAction === 'overwrite'}
-                        onChange={() => setDedupAction('overwrite')}
-                        className="text-blue-600"
-                      />
-                      <span className="text-xs">Overwrite / Update Existing Record</span>
-                    </label>
-                  </div>
-                </div>
-
-                <div className="pt-3 border-t border-slate-100 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="text-xs font-semibold text-slate-800">Auto-Approve Valid Records</div>
-                      <div className="text-[11px] text-slate-500">
-                        Automatically mark records with 0 validation errors as APPROVED during batch commit.
-                      </div>
-                    </div>
-                    <input
-                      type="checkbox"
-                      checked={autoApproveClean}
-                      onChange={(e) => setAutoApproveClean(e.target.checked)}
-                      className="rounded text-blue-600 h-4 w-4"
-                    />
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="text-xs font-semibold text-slate-800">Enforce Strict Manual Review on Missing VIN</div>
-                      <div className="text-[11px] text-slate-500">
-                        Hold entire import for review if any record lacks a 17-character VIN.
-                      </div>
-                    </div>
-                    <input
-                      type="checkbox"
-                      checked={requireManualReviewOnError}
-                      onChange={(e) => setRequireManualReviewOnError(e.target.checked)}
-                      className="rounded text-blue-600 h-4 w-4"
-                    />
-                  </div>
                 </div>
               </div>
             </div>

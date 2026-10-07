@@ -17,7 +17,12 @@ import {
 import { useAuth } from '@/lib/authContext';
 import { cn } from '@/lib/utils';
 
-export const Sidebar: React.FC = () => {
+interface SidebarProps {
+  isMobile?: boolean;
+  onClose?: () => void;
+}
+
+export const Sidebar: React.FC<SidebarProps> = ({ isMobile, onClose }) => {
   const pathname = usePathname();
   const { user, activeDealership, logout } = useAuth();
 
@@ -31,7 +36,7 @@ export const Sidebar: React.FC = () => {
   ];
 
   return (
-    <aside className="w-64 bg-slate-900 border-r border-slate-800 text-slate-300 flex flex-col shrink-0 h-screen">
+    <aside className={cn('bg-slate-900 border-r border-slate-800 text-slate-300 flex flex-col shrink-0 h-screen', isMobile ? 'w-full' : 'w-64')}>
       {/* Brand Header */}
       <div className="h-16 px-5 border-b border-slate-800 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2.5">
@@ -79,6 +84,9 @@ export const Sidebar: React.FC = () => {
             <Link
               key={item.name}
               href={item.href}
+              onClick={() => {
+                if (onClose) onClose();
+              }}
               className={cn(
                 'flex items-center gap-2.5 px-3 py-2 rounded-md text-xs font-medium transition-all group',
                 isActive

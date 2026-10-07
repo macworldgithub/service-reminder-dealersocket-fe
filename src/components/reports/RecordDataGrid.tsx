@@ -4,7 +4,6 @@ import React, { useState, useEffect } from 'react';
 import {
   Search,
   Filter,
-  Download,
   Plus,
   Trash2,
   SlidersHorizontal,
@@ -13,7 +12,6 @@ import {
   Edit2,
   Check,
   X,
-  FileSpreadsheet,
   AlertCircle,
   Eye,
   Mail,
@@ -295,7 +293,7 @@ export const RecordDataGrid: React.FC<RecordDataGridProps> = ({
     <div className="space-y-3">
       {/* Action Toolbar */}
       <div className="bg-white p-3 rounded-lg border border-slate-200 shadow-xs flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2 flex-1 min-w-[260px]">
+        <div className="flex flex-wrap items-center gap-2 flex-1 min-w-0">
           <div className="relative w-full max-w-xs">
             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
             <input
@@ -373,7 +371,7 @@ export const RecordDataGrid: React.FC<RecordDataGridProps> = ({
           )}
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {selectedIds.length > 0 && (
             <div className="flex items-center gap-1.5 bg-blue-50 border border-blue-200 px-2.5 py-1 rounded-md text-xs">
               <span className="font-semibold text-blue-700">{selectedIds.length} selected</span>
@@ -422,16 +420,6 @@ export const RecordDataGrid: React.FC<RecordDataGridProps> = ({
             )}
           </div>
 
-          <a href={`/api/reports/${reportId}/export/csv`} download>
-            <Button variant="outline" size="sm" icon={<Download className="w-3.5 h-3.5" />}>
-              CSV
-            </Button>
-          </a>
-          <a href={`/api/reports/${reportId}/export/xlsx`} download>
-            <Button variant="outline" size="sm" icon={<FileSpreadsheet className="w-3.5 h-3.5" />}>
-              Excel
-            </Button>
-          </a>
           <Button size="sm" onClick={() => setIsAddModalOpen(true)} icon={<Plus className="w-3.5 h-3.5" />}>
             Add Record
           </Button>
