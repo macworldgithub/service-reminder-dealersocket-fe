@@ -43,7 +43,7 @@ export const RecordDataGrid: React.FC<RecordDataGridProps> = ({ reportId }) => {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [sortBy, setSortBy] = useState('createdAt');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
 
@@ -431,10 +431,10 @@ export const RecordDataGrid: React.FC<RecordDataGridProps> = ({ reportId }) => {
       </div>
 
       {/* Spreadsheet Table Container */}
-      <div className="bg-white rounded-lg border border-slate-200 shadow-xs overflow-hidden">
-        <div className="overflow-x-auto max-h-[620px] relative">
+      <div className="bg-white rounded-lg border border-slate-200 shadow-xs overflow-hidden flex flex-col">
+        <div className="overflow-auto max-h-[580px] relative divide-y divide-slate-100">
           <table className="w-full text-left text-xs border-collapse">
-            <thead className="sticky top-0 bg-slate-100/95 backdrop-blur-xs z-20 border-b border-slate-200 text-slate-700 font-semibold uppercase text-[11px] tracking-wider select-none">
+            <thead className="sticky top-0 bg-slate-100/95 backdrop-blur-xs z-20 border-b border-slate-200 text-slate-700 font-semibold uppercase text-[11px] tracking-wider select-none shadow-xs">
               <tr>
                 <th className="py-2.5 px-3 w-10 text-center">
                   <input

@@ -20,6 +20,7 @@ import {
   Trash2,
   ArrowLeft,
   ShieldCheck,
+  Clock,
 } from 'lucide-react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Button } from '@/components/common/Button';
@@ -107,20 +108,25 @@ export default function ReportDetailPage() {
               </Badge>
             </div>
 
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500 mt-1.5">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500 mt-2">
               <span className="flex items-center gap-1 font-medium text-slate-700">
                 <Building2 className="w-3.5 h-3.5 text-blue-600" />
                 {dealershipName}
               </span>
               <span>·</span>
-              <span className="flex items-center gap-1 font-medium text-slate-700">
-                <Calendar className="w-3.5 h-3.5 text-slate-400" />
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+                <Calendar className="w-3.5 h-3.5 text-blue-600 shrink-0" />
                 {report.reportDateFrom && report.reportDateTo
-                  ? `${formatDate(report.reportDateFrom)} - ${formatDate(report.reportDateTo)}`
-                  : '9/28/2026 - 10/5/2026'}
+                  ? `${formatDate(report.reportDateFrom)} – ${formatDate(report.reportDateTo)}`
+                  : 'Date Unspecified'}
               </span>
               <span>·</span>
-              <span className="font-semibold text-slate-900">
+              <span className="flex items-center gap-1 text-slate-500">
+                <Clock className="w-3.5 h-3.5 text-slate-400" />
+                Uploaded {formatDate(report.createdAt)}
+              </span>
+              <span>·</span>
+              <span className="font-semibold text-slate-900 bg-slate-100 px-2 py-0.5 rounded text-[11px]">
                 {report.recordCount} records
               </span>
             </div>

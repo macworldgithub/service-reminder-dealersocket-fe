@@ -789,10 +789,10 @@ export const LivePdfViewer: React.FC<LivePdfViewerProps> = ({ report, records })
               </div>
 
               {/* Table rendering matching DealerSocket PDF */}
-              <div className="border border-slate-200 rounded-md overflow-x-auto">
+              <div className="border border-slate-200 rounded-md overflow-auto max-h-[520px]">
                 <table className="w-full text-left text-xs border-collapse">
-                  <thead>
-                    <tr style={{ backgroundColor: primaryColor }} className="text-white font-semibold text-[11px] uppercase tracking-wider">
+                  <thead className="sticky top-0 z-10">
+                    <tr style={{ backgroundColor: primaryColor }} className="text-white font-semibold text-[11px] uppercase tracking-wider shadow-xs">
                       {activeColumns.map((c) => (
                         <th key={c.key} className="py-2.5 px-3 whitespace-nowrap">
                           {c.label}

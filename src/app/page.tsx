@@ -14,10 +14,14 @@ import {
   Download,
   Eye,
   Building2,
+  Calendar,
+  Layers,
+  Sparkles,
 } from 'lucide-react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Button } from '@/components/common/Button';
 import { Badge } from '@/components/common/Badge';
+import { BatchUploadModal } from '@/components/common/BatchUploadModal';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/authContext';
 import { Report, ImportSession } from '@/lib/types';
@@ -28,26 +32,35 @@ export default function DashboardPage() {
   const [reports, setReports] = useState<Report[]>([]);
   const [imports, setImports] = useState<ImportSession[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isBatchModalOpen, setIsBatchModalOpen] = useState(false);
+
+  const fetchDashboardData = async () => {
+    setIsLoading(true);
+    try {
+      const reportParams = new URLSearchParams();
+      if (activeDealership?._id) reportParams.set('dealershipId', activeDealership._id);
+      const reportQuery = reportParams.toString() ? `?${reportParams.toString()}` : '';
+
+      const importParams = new URLSearchParams();
+      if (activeDealership?._id) importParams.set('dealershipId', activeDealership._id);
+      importParams.set('limit', '5');
+      const importQuery = `?${importParams.toString()}`;
+
+      const [reportsRes, importsRes] = await Promise.all([
+        api.get(`/reports${reportQuery}`),
+        api.get(`/imports${importQuery}`),
+      ]);
+
+      if (reportsRes.data?.success) setReports(reportsRes.data.data || []);
+      if (importsRes.data?.success) setImports(importsRes.data.data || []);
+    } catch (err) {
+      console.error('Failed to load dashboard data', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchDashboardData = async () => {
-      setIsLoading(true);
-      try {
-        const dealershipParam = activeDealership ? `?dealershipId=${activeDealership._id}` : '';
-        const [reportsRes, importsRes] = await Promise.all([
-          api.get(`/reports${dealershipParam}`),
-          api.get(`/imports${dealershipParam}&limit=5`),
-        ]);
-
-        if (reportsRes.data?.success) setReports(reportsRes.data.data || []);
-        if (importsRes.data?.success) setImports(importsRes.data.data || []);
-      } catch (err) {
-        console.error('Failed to load dashboard data', err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     fetchDashboardData();
   }, [activeDealership]);
 
@@ -55,18 +68,38 @@ export default function DashboardPage() {
   const totalReports = reports.length;
   const totalRecords = reports.reduce((acc, r) => acc + (r.recordCount || 0), 0);
   const successfulImports = imports.filter((i) => i.status === 'COMPLETED').length;
-  const failedImports = imports.filter((i) => i.status === 'FAILED').length;
+
+  // Compute date span across ingested reports
+  const datePeriods = reports
+    .filter((r) => r.reportDateFrom && r.reportDateTo)
+    .map((r) => ({ from: new Date(r.reportDateFrom!), to: new Date(r.reportDateTo!) }))
+    .sort((a, b) => b.to.getTime() - a.to.getTime());
+
+  const latestPeriodText =
+    datePeriods.length > 0
+      ? `${formatDate(datePeriods[0].from)} – ${formatDate(datePeriods[0].to)}`
+      : 'Active Ingestion';
 
   return (
     <AppLayout
       title="Operations Dashboard"
       subtitle="Overview of campaign report ingestion, record validation, and activity"
       actions={
-        <Link href="/imports/new">
-          <Button icon={<UploadCloud className="w-4 h-4" />}>
-            Upload Report
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsBatchModalOpen(true)}
+            icon={<Layers className="w-4 h-4 text-blue-600" />}
+          >
+            Batch Upload PDFs
           </Button>
-        </Link>
+          <Link href="/imports/new">
+            <Button size="sm" icon={<UploadCloud className="w-4 h-4" />}>
+              Upload Single Report
+            </Button>
+          </Link>
+        </div>
       }
     >
       {/* 4 Clean Operational Metric Cards */}
@@ -104,13 +137,15 @@ export default function DashboardPage() {
         <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-xs">
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">
-              Successful Ingestions
+              Latest Service Coverage
             </span>
-            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+            <Calendar className="w-4 h-4 text-blue-600" />
           </div>
-          <div className="mt-2 text-2xl font-bold text-slate-900">{successfulImports}</div>
+          <div className="mt-2 text-base font-bold text-slate-900 truncate">
+            {latestPeriodText}
+          </div>
           <div className="mt-1 flex items-center text-xs text-slate-500">
-            <span>Automated bulk ingestion</span>
+            <span>{datePeriods.length} distinct report period(s)</span>
           </div>
         </div>
 
@@ -135,21 +170,33 @@ export default function DashboardPage() {
         <div className="px-5 py-3.5 border-b border-slate-200 flex items-center justify-between bg-slate-50/50">
           <div>
             <h2 className="text-sm font-semibold text-slate-900">Recent Campaign Reports</h2>
-            <p className="text-xs text-slate-500">DealerSocket closed ROs and customer service batches</p>
+            <p className="text-xs text-slate-500">
+              DealerSocket closed ROs identified by service date range and batch timestamp
+            </p>
           </div>
-          <Link href="/reports" className="text-xs font-medium text-blue-600 hover:text-blue-700 flex items-center gap-1">
-            View All <ArrowRight className="w-3.5 h-3.5" />
-          </Link>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setIsBatchModalOpen(true)}
+              className="text-xs font-medium text-blue-600 hover:text-blue-700 flex items-center gap-1 cursor-pointer"
+            >
+              <Layers className="w-3.5 h-3.5" /> Batch Upload
+            </button>
+            <span className="text-slate-300">·</span>
+            <Link href="/reports" className="text-xs font-medium text-blue-600 hover:text-blue-700 flex items-center gap-1">
+              View All <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
         </div>
 
-        <div className="overflow-x-auto flex-1">
+        <div className="overflow-auto max-h-[460px] flex-1">
           <table className="w-full text-left text-xs border-collapse">
-            <thead>
-              <tr className="border-b border-slate-200 bg-slate-50/70 text-slate-600 font-semibold uppercase tracking-wider text-[11px]">
-                <th className="py-2.5 px-4">Report Name</th>
+            <thead className="sticky top-0 z-10">
+              <tr className="border-b border-slate-200 bg-slate-50 text-slate-600 font-semibold uppercase tracking-wider text-[11px] shadow-xs">
+                <th className="py-2.5 px-4">Report Details</th>
+                <th className="py-2.5 px-4">Service Date Period</th>
                 <th className="py-2.5 px-4">Campaign</th>
-                <th className="py-2.5 px-4">Period</th>
                 <th className="py-2.5 px-4">Records</th>
+                <th className="py-2.5 px-4">Uploaded</th>
                 <th className="py-2.5 px-4">Status</th>
                 <th className="py-2.5 px-4 text-right">Actions</th>
               </tr>
@@ -157,56 +204,98 @@ export default function DashboardPage() {
             <tbody className="divide-y divide-slate-100">
               {reports.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="py-8 text-center text-slate-400">
+                  <td colSpan={7} className="py-8 text-center text-slate-400">
                     No reports uploaded for this dealership yet.
                   </td>
                 </tr>
               ) : (
-                reports.slice(0, 8).map((r) => (
-                  <tr key={r._id} className="hover:bg-slate-50/80 transition-colors">
-                    <td className="py-3 px-4 font-medium text-slate-900">
-                      <Link href={`/reports/${r._id}`} className="hover:text-blue-600 font-semibold">
-                        {r.name}
-                      </Link>
-                      <div className="text-[11px] text-slate-400 font-normal">
-                        {r.sourceFileType?.toUpperCase()}
-                      </div>
-                    </td>
-                    <td className="py-3 px-4 text-slate-700">{r.campaignName || '—'}</td>
-                    <td className="py-3 px-4 text-slate-500">
-                      {r.reportDateFrom && r.reportDateTo
-                        ? `${formatDate(r.reportDateFrom)} - ${formatDate(r.reportDateTo)}`
-                        : '—'}
-                    </td>
-                    <td className="py-3 px-4 font-semibold text-slate-900">
-                      {r.recordCount}
-                    </td>
-                    <td className="py-3 px-4">
-                      <Badge variant="success" size="sm">
-                        {r.status}
-                      </Badge>
-                    </td>
-                    <td className="py-3 px-4 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <Link href={`/reports/${r._id}`}>
-                          <Button variant="outline" size="sm" className="h-7 px-2">
-                            <Eye className="w-3.5 h-3.5 mr-1" /> View
-                          </Button>
-                        </Link>
-                        <a href={`/api/reports/${r._id}/pdf`} target="_blank" rel="noreferrer">
-                          <Button variant="ghost" size="sm" className="h-7 px-2 text-slate-600">
-                            <Download className="w-3.5 h-3.5" />
-                          </Button>
-                        </a>
-                      </div>
-                    </td>
-                  </tr>
-                ))
+                reports.slice(0, 10).map((r) => {
+                  const hasDate = r.reportDateFrom && r.reportDateTo;
+                  return (
+                    <tr key={r._id} className="hover:bg-slate-50/80 transition-colors">
+                      <td className="py-3 px-4 font-medium text-slate-900">
+                        <div className="flex flex-col gap-0.5">
+                          <Link href={`/reports/${r._id}`} className="hover:text-blue-600 font-semibold text-slate-900 flex items-center gap-1.5">
+                            <span>{r.name}</span>
+                            {r.version && r.version > 1 && (
+                              <span className="text-[10px] font-mono font-medium px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 border border-slate-200">
+                                v{r.version}
+                              </span>
+                            )}
+                          </Link>
+                          <div className="text-[11px] text-slate-400 font-mono flex items-center gap-1.5">
+                            <span>{r.sourceFileName}</span>
+                            <span>·</span>
+                            <span className="uppercase">{r.sourceFileType}</span>
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Prominent Visual Date Badge */}
+                      <td className="py-3 px-4">
+                        {hasDate ? (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+                            <Calendar className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                            {`${formatDate(r.reportDateFrom)} – ${formatDate(r.reportDateTo)}`}
+                          </span>
+                        ) : (
+                          <span className="text-slate-400 text-xs italic">
+                            Date Unspecified
+                          </span>
+                        )}
+                      </td>
+
+                      <td className="py-3 px-4 text-slate-700 font-medium">
+                        {r.campaignName || '—'}
+                      </td>
+
+                      <td className="py-3 px-4 font-bold text-slate-900">
+                        {r.recordCount}
+                      </td>
+
+                      <td className="py-3 px-4 text-slate-500">
+                        <div className="flex items-center gap-1 text-[11px]">
+                          <Clock className="w-3 h-3 text-slate-400 shrink-0" />
+                          <span>{formatDate(r.createdAt)}</span>
+                        </div>
+                      </td>
+
+                      <td className="py-3 px-4">
+                        <Badge variant="success" size="sm">
+                          {r.status}
+                        </Badge>
+                      </td>
+
+                      <td className="py-3 px-4 text-right">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <Link href={`/reports/${r._id}`}>
+                            <Button variant="outline" size="sm" className="h-7 px-2">
+                              <Eye className="w-3.5 h-3.5 mr-1" /> View
+                            </Button>
+                          </Link>
+                          <a href={`/api/reports/${r._id}/pdf`} target="_blank" rel="noreferrer">
+                            <Button variant="ghost" size="sm" className="h-7 px-2 text-slate-600">
+                              <Download className="w-3.5 h-3.5" />
+                            </Button>
+                          </a>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
         </div>
       </div>
+
+      {/* Batch Upload Multi-PDF Modal */}
+      <BatchUploadModal
+        isOpen={isBatchModalOpen}
+        onClose={() => setIsBatchModalOpen(false)}
+        onSuccess={fetchDashboardData}
+      />
     </AppLayout>
   );
 }
+

@@ -17,10 +17,12 @@ import {
   Eye,
   Info,
   Download,
+  Layers,
 } from 'lucide-react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Button } from '@/components/common/Button';
 import { Badge } from '@/components/common/Badge';
+import { BatchUploadModal } from '@/components/common/BatchUploadModal';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/authContext';
 import { formatCurrency, formatFileSize, formatDate } from '@/lib/utils';
@@ -28,6 +30,7 @@ import { formatCurrency, formatFileSize, formatDate } from '@/lib/utils';
 export default function NewImportPage() {
   const router = useRouter();
   const { activeDealership } = useAuth();
+  const [isBatchModalOpen, setIsBatchModalOpen] = useState(false);
 
   // Wizard state
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4 | 5>(1);
@@ -213,8 +216,32 @@ export default function NewImportPage() {
         {/* STEP 1: UPLOAD */}
         {currentStep === 1 && (
           <div className="bg-white p-8 rounded-lg border border-slate-200 shadow-xs space-y-6">
+            {/* Multi-PDF Batch Ingestion Banner */}
+            <div className="p-4 bg-blue-50/70 border border-blue-200 rounded-lg flex flex-col sm:flex-row items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-md bg-blue-600 text-white flex items-center justify-center shrink-0">
+                  <Layers className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-blue-900">Have multiple PDF reports?</h4>
+                  <p className="text-[11px] text-blue-700">
+                    Process multiple PDF files together in a single batch with automatic date detection and naming.
+                  </p>
+                </div>
+              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setIsBatchModalOpen(true)}
+                icon={<Layers className="w-3.5 h-3.5 text-blue-600" />}
+                className="bg-white hover:bg-blue-50 text-blue-700 border-blue-300 shrink-0"
+              >
+                Batch Upload PDFs
+              </Button>
+            </div>
+
             <div className="text-center max-w-lg mx-auto">
-              <h2 className="text-base font-semibold text-slate-900">Upload DealerSocket Report</h2>
+              <h2 className="text-base font-semibold text-slate-900">Upload Single Report (Step-by-Step Wizard)</h2>
               <p className="text-xs text-slate-500 mt-1">
                 Select your closed repair orders or campaign report in CSV, XLSX, XLS, or PDF format.
               </p>
@@ -351,9 +378,9 @@ export default function NewImportPage() {
               <Badge variant="default">{mappings.length} Columns Detected</Badge>
             </div>
 
-            <div className="border border-slate-200 rounded-lg overflow-hidden">
+            <div className="border border-slate-200 rounded-lg overflow-auto max-h-[480px]">
               <table className="w-full text-left text-xs border-collapse">
-                <thead>
+                <thead className="sticky top-0 bg-slate-50 z-10 border-b border-slate-200 shadow-xs">
                   <tr className="bg-slate-50 border-b border-slate-200 font-semibold text-slate-700 text-[11px] uppercase tracking-wider">
                     <th className="py-2.5 px-4">DealerSocket Column</th>
                     <th className="py-2.5 px-4">Internal Target Field</th>
@@ -461,9 +488,9 @@ export default function NewImportPage() {
               </div>
             </div>
 
-            <div className="border border-slate-200 rounded-lg overflow-x-auto max-h-96">
+            <div className="border border-slate-200 rounded-lg overflow-auto max-h-[480px]">
               <table className="w-full text-left text-xs border-collapse">
-                <thead className="sticky top-0 bg-slate-100 z-10 border-b border-slate-200">
+                <thead className="sticky top-0 bg-slate-100 z-10 border-b border-slate-200 shadow-xs">
                   <tr className="text-[11px] font-semibold text-slate-700 uppercase tracking-wider">
                     <th className="py-2.5 px-3">#</th>
                     <th className="py-2.5 px-3">Entity ID</th>
@@ -573,6 +600,12 @@ export default function NewImportPage() {
           </div>
         )}
       </div>
+
+      <BatchUploadModal
+        isOpen={isBatchModalOpen}
+        onClose={() => setIsBatchModalOpen(false)}
+        onSuccess={() => router.push('/reports')}
+      />
     </AppLayout>
   );
 }
