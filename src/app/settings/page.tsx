@@ -1,10 +1,12 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Button } from '@/components/common/Button';
 import { Badge } from '@/components/common/Badge';
 import { useAuth } from '@/lib/authContext';
+import { api } from '@/lib/api';
 import {
   Settings as SettingsIcon,
   Building2,
@@ -18,6 +20,15 @@ import {
   RefreshCw,
   Clock,
   Sparkles,
+  Eye,
+  EyeOff,
+  Terminal,
+  Play,
+  ArrowUpRight,
+  Check,
+  UploadCloud,
+  FileCheck,
+  ShieldCheck,
 } from 'lucide-react';
 
 export default function SettingsPage() {
@@ -54,9 +65,100 @@ export default function SettingsPage() {
     'CONFIDENTIAL DEALERSOCKET DMS EXPORT — FOR AUTHORIZED HYUNDAI SERVICE PERSONNEL ONLY.'
   );
 
-  // Webhooks & API
-  const [webhookUrl, setWebhookUrl] = useState('https://hooks.dealersocket.com/events/v2/closed-ro');
-  const [apiKey] = useState('dsk_live_891e4a029cb37f81a7b52048591f');
+  // Webhooks & API state
+  const [webhookUrl, setWebhookUrl] = useState('http://localhost:7000/api/webhooks/ingest');
+  const [apiKey, setApiKey] = useState('ds_live_sk_9a8f27c3e104b46298fa');
+  const [showApiKey, setShowApiKey] = useState(false);
+  const [copiedUrl, setCopiedUrl] = useState(false);
+  const [pingLoading, setPingLoading] = useState(false);
+  const [pingResult, setPingResult] = useState<{ success: boolean; message: string; timestamp?: string } | null>(null);
+  const [sampleLoading, setSampleLoading] = useState(false);
+  const [sampleResult, setSampleResult] = useState<any | null>(null);
+  const [logs, setLogs] = useState<any[]>([]);
+  const [logsLoading, setLogsLoading] = useState(false);
+  const [codeSnippetTab, setCodeSnippetTab] = useState<'curl' | 'python' | 'node'>('curl');
+  const [copiedSnippet, setCopiedSnippet] = useState(false);
+
+  const fetchWebhookLogs = async () => {
+    try {
+      setLogsLoading(true);
+      const res = await api.get('/webhooks/logs');
+      if (res.data?.success && Array.isArray(res.data?.data)) {
+        setLogs(res.data.data);
+      }
+    } catch (err) {
+      console.error('Failed to load webhook logs', err);
+    } finally {
+      setLogsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'integrations') {
+      fetchWebhookLogs();
+    }
+  }, [activeTab]);
+
+  const handleSendPing = async () => {
+    setPingLoading(true);
+    setPingResult(null);
+    try {
+      const res = await api.post(
+        '/webhooks/ping',
+        {},
+        { headers: { 'x-api-key': apiKey } }
+      );
+      setPingResult({
+        success: true,
+        message: res.data?.message || 'Webhook ping check successful (200 OK)',
+        timestamp: new Date().toLocaleTimeString(),
+      });
+      fetchWebhookLogs();
+    } catch (err: any) {
+      setPingResult({
+        success: false,
+        message: err.response?.data?.message || err.message || 'Webhook ping failed',
+      });
+    } finally {
+      setPingLoading(false);
+    }
+  };
+
+  const handleSendSamplePdf = async () => {
+    setSampleLoading(true);
+    setSampleResult(null);
+    try {
+      const res = await api.post(
+        '/webhooks/test-sample?sample=SMHY-(NSD)S-Rmndr(Mtdr).pdf',
+        {},
+        { headers: { 'x-api-key': apiKey } }
+      );
+      setSampleResult(res.data?.data);
+      fetchWebhookLogs();
+    } catch (err: any) {
+      alert('Webhook sample test failed: ' + (err.response?.data?.message || err.message));
+    } finally {
+      setSampleLoading(false);
+    }
+  };
+
+  const copyWebhookUrl = () => {
+    navigator.clipboard.writeText(webhookUrl);
+    setCopiedUrl(true);
+    setTimeout(() => setCopiedUrl(false), 2500);
+  };
+
+  const copyApiKey = () => {
+    navigator.clipboard.writeText(apiKey);
+    setCopiedKey(true);
+    setTimeout(() => setCopiedKey(false), 2500);
+  };
+
+  const copyCodeSnippet = (text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedSnippet(true);
+    setTimeout(() => setCopiedSnippet(false), 2500);
+  };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,12 +171,6 @@ export default function SettingsPage() {
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 4000);
     }, 600);
-  };
-
-  const copyApiKey = () => {
-    navigator.clipboard.writeText(apiKey);
-    setCopiedKey(true);
-    setTimeout(() => setCopiedKey(false), 2500);
   };
 
   return (
@@ -524,59 +620,407 @@ export default function SettingsPage() {
 
           {activeTab === 'integrations' && (
             <div className="space-y-6">
-              <div>
-                <h3 className="text-sm font-semibold text-slate-900">DealerSocket DMS & Automated Webhooks</h3>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Connect direct ingestion pipelines with DealerSocket CRM, Hyundai Dealer Portal, and downstream notification services.
-                </p>
-              </div>
-
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Webhook Endpoint URL</label>
-                  <div className="flex gap-2">
-                    <input
-                      type="url"
-                      value={webhookUrl}
-                      onChange={(e) => setWebhookUrl(e.target.value)}
-                      className="flex-1 text-xs px-3 py-2 border border-slate-300 rounded-md font-mono focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    />
-                    <Button variant="outline" size="sm" type="button" onClick={() => alert('Webhook test ping sent (HTTP 200 OK)')}>
-                      Send Test Ping
-                    </Button>
+              {/* Top Clarification & Capability Summary Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="p-4 bg-emerald-50/70 border border-emerald-200/80 rounded-xl space-y-1.5 shadow-sm">
+                  <div className="flex items-center gap-2 text-emerald-800 font-bold text-xs uppercase tracking-wider">
+                    <FileCheck className="w-4 h-4 text-emerald-600" />
+                    PDF Ingestion Supported
                   </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">API Secret Key</label>
-                  <div className="flex gap-2">
-                    <input
-                      type="password"
-                      readOnly
-                      value={apiKey}
-                      className="flex-1 text-xs px-3 py-2 border border-slate-200 bg-slate-50 rounded-md font-mono text-slate-600 select-all"
-                    />
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      type="button"
-                      icon={copiedKey ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-                      onClick={copyApiKey}
-                    >
-                      {copiedKey ? 'Copied!' : 'Copy Key'}
-                    </Button>
-                  </div>
-                </div>
-
-                <div className="p-3.5 bg-blue-50/50 border border-blue-200/60 rounded-lg text-xs space-y-1.5 text-slate-700">
-                  <div className="font-semibold text-blue-900 flex items-center gap-1.5">
-                    <Sparkles className="w-4 h-4 text-blue-600" />
-                    Automatic Event Dispatch
-                  </div>
-                  <p className="text-slate-600 text-[11px]">
-                    Whenever a report finishes ingestion and validation, DealerSocket events will post JSON payloads to your configured webhook endpoint.
+                  <p className="text-xs text-emerald-950 font-medium">
+                    Yes! Accepts native PDF Closed RO reports.
+                  </p>
+                  <p className="text-[11px] text-emerald-800/90 leading-relaxed">
+                    Auto-parses entity IDs, customer names, vehicles, RO revenues, and dates without manual column mapping.
                   </p>
                 </div>
+
+                <div className="p-4 bg-blue-50/70 border border-blue-200/80 rounded-xl space-y-1.5 shadow-sm">
+                  <div className="flex items-center gap-2 text-blue-800 font-bold text-xs uppercase tracking-wider">
+                    <ShieldCheck className="w-4 h-4 text-blue-600" />
+                    Webhook Status: Online
+                  </div>
+                  <p className="text-xs text-blue-950 font-medium">
+                    Active & ready at <code className="font-mono text-[11px] bg-blue-100 px-1 py-0.5 rounded">/api/webhooks/ingest</code>
+                  </p>
+                  <p className="text-[11px] text-blue-800/90 leading-relaxed">
+                    Protected by secure Dealership API key authentication. Handles multipart file uploads and JSON base64 payloads.
+                  </p>
+                </div>
+
+                <div className="p-4 bg-purple-50/70 border border-purple-200/80 rounded-xl space-y-1.5 shadow-sm">
+                  <div className="flex items-center gap-2 text-purple-800 font-bold text-xs uppercase tracking-wider">
+                    <Clock className="w-4 h-4 text-purple-600" />
+                    Same-Day Report Ingestion
+                  </div>
+                  <p className="text-xs text-purple-950 font-medium">
+                    Added to today's reports automatically.
+                  </p>
+                  <p className="text-[11px] text-purple-800/90 leading-relaxed">
+                    Reports are timestamped with the current date, immediately visible on the Campaign Reports dashboard with full revenue lookup.
+                  </p>
+                </div>
+              </div>
+
+              {/* Endpoint Configuration & API Key */}
+              <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-5">
+                <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900">DealerSocket Inbound Webhook Configuration</h3>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Configure your DMS or external cron script to stream closed RO reports straight into South Morang Hyundai.
+                    </p>
+                  </div>
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    Webhook Live
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Webhook URL Field */}
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-bold text-slate-700">Inbound Webhook Endpoint URL</label>
+                      <span className="text-[10px] text-slate-500 font-mono">POST / multipart/form-data</span>
+                    </div>
+                    <div className="flex gap-2">
+                      <input
+                        type="url"
+                        value={webhookUrl}
+                        readOnly
+                        className="flex-1 text-xs px-3 py-2 border border-slate-300 rounded-lg font-mono bg-slate-50 text-slate-800 focus:outline-none select-all"
+                      />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        type="button"
+                        onClick={copyWebhookUrl}
+                        icon={copiedUrl ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                      >
+                        {copiedUrl ? 'Copied' : 'Copy'}
+                      </Button>
+                    </div>
+                    <p className="text-[11px] text-slate-500">
+                      Accepts form field <code className="font-mono text-slate-700 font-semibold bg-slate-100 px-1 py-0.5 rounded">file</code> with <code className="font-mono text-slate-700">.pdf</code>, <code className="font-mono text-slate-700">.csv</code>, or <code className="font-mono text-slate-700">.xlsx</code>.
+                    </p>
+                  </div>
+
+                  {/* API Secret Key Field */}
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-bold text-slate-700">Dealership API Secret Key</label>
+                      <span className="text-[10px] text-slate-500 font-mono">Header: x-api-key</span>
+                    </div>
+                    <div className="flex gap-2">
+                      <div className="relative flex-1">
+                        <input
+                          type={showApiKey ? 'text' : 'password'}
+                          readOnly
+                          value={apiKey}
+                          className="w-full text-xs px-3 py-2 pr-9 border border-slate-300 bg-slate-50 rounded-lg font-mono text-slate-800 select-all"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowApiKey(!showApiKey)}
+                          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                        >
+                          {showApiKey ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                        </button>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        type="button"
+                        icon={copiedKey ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                        onClick={copyApiKey}
+                      >
+                        {copiedKey ? 'Copied' : 'Copy'}
+                      </Button>
+                    </div>
+                    <p className="text-[11px] text-slate-500">
+                      Scoped to <span className="font-semibold text-slate-700">South Morang Hyundai (SMH-01)</span>. Keep this key confidential.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Actions: Send Test Ping & Send Test PDF */}
+                <div className="pt-2 flex flex-wrap items-center gap-3">
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    type="button"
+                    disabled={pingLoading}
+                    onClick={handleSendPing}
+                    icon={pingLoading ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Play className="w-3.5 h-3.5" />}
+                  >
+                    {pingLoading ? 'Pinging Endpoint...' : 'Send Test Ping'}
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    type="button"
+                    disabled={sampleLoading}
+                    onClick={handleSendSamplePdf}
+                    icon={sampleLoading ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <UploadCloud className="w-3.5 h-3.5 text-blue-600" />}
+                  >
+                    {sampleLoading ? 'Ingesting Sample PDF (609 Rows)...' : 'Send Test PDF via Webhook'}
+                  </Button>
+
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    type="button"
+                    onClick={fetchWebhookLogs}
+                    icon={<RefreshCw className={`w-3.5 h-3.5 ${logsLoading ? 'animate-spin' : ''}`} />}
+                  >
+                    Refresh Logs
+                  </Button>
+                </div>
+
+                {/* Ping Result Feedback */}
+                {pingResult && (
+                  <div
+                    className={`p-3 rounded-lg text-xs flex items-center justify-between border ${
+                      pingResult.success
+                        ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
+                        : 'bg-rose-50 border-rose-200 text-rose-900'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      {pingResult.success ? (
+                        <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                      ) : (
+                        <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0" />
+                      )}
+                      <span className="font-medium">{pingResult.message}</span>
+                    </div>
+                    {pingResult.timestamp && (
+                      <span className="text-[11px] opacity-75 font-mono">Response at {pingResult.timestamp}</span>
+                    )}
+                  </div>
+                )}
+
+                {/* Sample PDF Ingestion Success Alert */}
+                {sampleResult && (
+                  <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 text-blue-900 font-bold text-xs">
+                        <CheckCircle2 className="w-4 h-4 text-blue-600" />
+                        Sample PDF Ingested Successfully via Webhook!
+                      </div>
+                      <Badge variant="success" size="sm">201 CREATED</Badge>
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-white/80 p-3 rounded-lg border border-blue-100 text-xs">
+                      <div>
+                        <span className="text-slate-500 text-[10px] block">Report Name</span>
+                        <span className="font-semibold text-slate-900 truncate block">{sampleResult.reportName}</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-500 text-[10px] block">Records Ingested</span>
+                        <span className="font-bold text-blue-700">{sampleResult.recordCount?.toLocaleString()}</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-500 text-[10px] block">Tracked Revenue</span>
+                        <span className="font-bold text-emerald-700">${sampleResult.totalRevenue?.toLocaleString()}</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-500 text-[10px] block">Ingestion Date</span>
+                        <span className="font-semibold text-slate-700">Today ({new Date(sampleResult.ingestedAt).toLocaleTimeString()})</span>
+                      </div>
+                    </div>
+                    <div className="flex justify-end">
+                      <Link
+                        href={sampleResult.viewUrl || `/reports/${sampleResult.reportId}`}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg shadow-sm transition"
+                      >
+                        View Report in Campaign Reports
+                        <ArrowUpRight className="w-3.5 h-3.5" />
+                      </Link>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Integration Code Snippets */}
+              <div className="bg-slate-900 text-slate-200 rounded-xl p-5 shadow-sm space-y-3 border border-slate-800">
+                <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                  <div className="flex items-center gap-2">
+                    <Terminal className="w-4 h-4 text-blue-400" />
+                    <span className="text-xs font-bold text-white uppercase tracking-wider">
+                      Webhook Ingestion Code Examples
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => setCodeSnippetTab('curl')}
+                      className={`px-2.5 py-1 text-xs rounded-md transition font-medium ${
+                        codeSnippetTab === 'curl' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      cURL
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCodeSnippetTab('python')}
+                      className={`px-2.5 py-1 text-xs rounded-md transition font-medium ${
+                        codeSnippetTab === 'python' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      Python
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCodeSnippetTab('node')}
+                      className={`px-2.5 py-1 text-xs rounded-md transition font-medium ${
+                        codeSnippetTab === 'node' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      Node.js
+                    </button>
+                  </div>
+                </div>
+
+                <div className="relative">
+                  <pre className="text-xs font-mono text-emerald-400 bg-slate-950/70 p-3.5 rounded-lg overflow-x-auto leading-relaxed border border-slate-800/80">
+                    {codeSnippetTab === 'curl' &&
+`curl -X POST http://localhost:7000/api/webhooks/ingest \\
+  -H "x-api-key: ${apiKey}" \\
+  -F "file=@HY_Closed_RO.pdf"`}
+                    {codeSnippetTab === 'python' &&
+`import requests
+
+url = "http://localhost:7000/api/webhooks/ingest"
+headers = {"x-api-key": "${apiKey}"}
+
+with open("HY_Closed_RO.pdf", "rb") as f:
+    response = requests.post(url, headers=headers, files={"file": f})
+    print(response.json())`}
+                    {codeSnippetTab === 'node' &&
+`const fs = require('fs');
+const FormData = require('form-data');
+
+const form = new FormData();
+form.append('file', fs.createReadStream('HY_Closed_RO.pdf'));
+
+fetch('http://localhost:7000/api/webhooks/ingest', {
+  method: 'POST',
+  headers: {
+    'x-api-key': '${apiKey}',
+    ...form.getHeaders()
+  },
+  body: form
+}).then(res => res.json()).then(console.log);`}
+                  </pre>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const snippet =
+                        codeSnippetTab === 'curl'
+                          ? `curl -X POST http://localhost:7000/api/webhooks/ingest \\\n  -H "x-api-key: ${apiKey}" \\\n  -F "file=@HY_Closed_RO.pdf"`
+                          : codeSnippetTab === 'python'
+                          ? `import requests\n\nurl = "http://localhost:7000/api/webhooks/ingest"\nheaders = {"x-api-key": "${apiKey}"}\nwith open("HY_Closed_RO.pdf", "rb") as f:\n    response = requests.post(url, headers=headers, files={"file": f})\n    print(response.json())`
+                          : `const fs = require('fs');\nconst FormData = require('form-data');\nconst form = new FormData();\nform.append('file', fs.createReadStream('HY_Closed_RO.pdf'));\nfetch('http://localhost:7000/api/webhooks/ingest', { method: 'POST', headers: { 'x-api-key': '${apiKey}', ...form.getHeaders() }, body: form }).then(r => r.json()).then(console.log);`;
+                      copyCodeSnippet(snippet);
+                    }}
+                    className="absolute top-2.5 right-2.5 px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 text-[10px] rounded flex items-center gap-1 transition"
+                  >
+                    {copiedSnippet ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                    {copiedSnippet ? 'Copied' : 'Copy'}
+                  </button>
+                </div>
+              </div>
+
+              {/* Inbound Webhook Activity & Delivery Log Table */}
+              <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                <div className="p-4 border-b border-slate-100 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-slate-600" />
+                    <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+                      Recent Inbound Webhook Activity Logs
+                    </h4>
+                    <Badge variant="default" size="sm">{logs.length}</Badge>
+                  </div>
+                  <span className="text-[11px] text-slate-500">Live delivery history</span>
+                </div>
+
+                {logs.length === 0 ? (
+                  <div className="p-8 text-center text-slate-400 text-xs">
+                    No webhook calls recorded yet. Click "Send Test Ping" or "Send Test PDF via Webhook" to initiate events.
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs text-slate-700">
+                      <thead className="bg-slate-50 text-[11px] font-bold text-slate-500 uppercase tracking-wider border-b border-slate-200">
+                        <tr>
+                          <th className="px-4 py-3">Timestamp / Date</th>
+                          <th className="px-4 py-3">Event / File</th>
+                          <th className="px-4 py-3">Type</th>
+                          <th className="px-4 py-3 text-right">Records</th>
+                          <th className="px-4 py-3 text-right">Revenue</th>
+                          <th className="px-4 py-3 text-center">Status</th>
+                          <th className="px-4 py-3 text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 font-normal">
+                        {logs.map((log: any) => (
+                          <tr key={log._id} className="hover:bg-slate-50/70 transition">
+                            <td className="px-4 py-3 text-slate-500 font-mono text-[11px] whitespace-nowrap">
+                              {new Date(log.createdAt).toLocaleString('en-US', {
+                                month: 'short',
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                                second: '2-digit',
+                              })}
+                            </td>
+                            <td className="px-4 py-3 font-medium text-slate-900 max-w-xs truncate">
+                              {log.fileName || log.message || log.eventType}
+                            </td>
+                            <td className="px-4 py-3">
+                              <Badge
+                                variant={log.fileType === 'pdf' ? 'default' : 'neutral'}
+                                size="sm"
+                                className="uppercase font-mono text-[10px]"
+                              >
+                                {log.fileType || log.eventType}
+                              </Badge>
+                            </td>
+                            <td className="px-4 py-3 text-right font-mono font-medium text-slate-700">
+                              {log.recordCount ? log.recordCount.toLocaleString() : '—'}
+                            </td>
+                            <td className="px-4 py-3 text-right font-mono font-semibold text-emerald-700">
+                              {log.totalRevenue ? `$${log.totalRevenue.toLocaleString()}` : '—'}
+                            </td>
+                            <td className="px-4 py-3 text-center">
+                              <Badge
+                                variant={log.status === 'SUCCESS' ? 'success' : log.status === 'PING' ? 'outline' : 'error'}
+                                size="sm"
+                              >
+                                {log.responseStatus} {log.status}
+                              </Badge>
+                            </td>
+                            <td className="px-4 py-3 text-right whitespace-nowrap">
+                              {log.reportId?._id || (typeof log.reportId === 'string' && log.reportId) ? (
+                                <Link
+                                  href={`/reports/${log.reportId?._id || log.reportId}`}
+                                  className="inline-flex items-center gap-1 text-[11px] text-blue-600 hover:text-blue-800 font-semibold"
+                                >
+                                  View Report
+                                  <ArrowUpRight className="w-3 h-3" />
+                                </Link>
+                              ) : (
+                                <span className="text-slate-400 text-[11px]">—</span>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
             </div>
           )}
