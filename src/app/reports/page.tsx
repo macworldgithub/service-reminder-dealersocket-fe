@@ -65,6 +65,39 @@ export default function ReportsPage() {
   const isTodayActive = Boolean(dateFromFilter && dateFromFilter === todayStr && dateToFilter === todayStr);
   const isYesterdayActive = Boolean(dateFromFilter && dateFromFilter === yesterdayStr && dateToFilter === yesterdayStr);
 
+  const [quarterYear, setQuarterYear] = useState<number>(() => new Date().getFullYear());
+
+  // Dynamically determine available years from reports or current system date
+  const availableYears = useMemo(() => {
+    const current = new Date().getFullYear();
+    const years = new Set<number>([current, current - 1]);
+    reports.forEach((r) => {
+      if (r.reportDateFrom) {
+        const y = new Date(r.reportDateFrom).getFullYear();
+        if (!isNaN(y)) years.add(y);
+      }
+      if (r.reportDateTo) {
+        const y = new Date(r.reportDateTo).getFullYear();
+        if (!isNaN(y)) years.add(y);
+      }
+      if (r.createdAt) {
+        const y = new Date(r.createdAt).getFullYear();
+        if (!isNaN(y)) years.add(y);
+      }
+    });
+    return Array.from(years).sort((a, b) => b - a);
+  }, [reports]);
+
+  // Auto-align quarterYear when user chooses dates from a specific year
+  useEffect(() => {
+    if (dateFromFilter && dateFromFilter.length >= 4) {
+      const yr = parseInt(dateFromFilter.slice(0, 4), 10);
+      if (!isNaN(yr) && availableYears.includes(yr)) {
+        setQuarterYear(yr);
+      }
+    }
+  }, [dateFromFilter, availableYears]);
+
   // Batch upload modal state
   const [isBatchModalOpen, setIsBatchModalOpen] = useState(false);
 
@@ -145,9 +178,49 @@ export default function ReportsPage() {
     }
   };
 
-  const handleQuickDatePreset = (
-    preset: 'today' | 'yesterday' | 'all' | '2026' | '2025' | 'q1_2025' | 'q2_2025' | 'q3_2025' | 'q4_2025'
-  ) => {
+  const getQuarterDates = (year: number, quarter: 1 | 2 | 3 | 4) => {
+    switch (quarter) {
+      case 1:
+        return { from: `${year}-01-01`, to: `${year}-03-31`, label: 'Jan 1 - Mar 31' };
+      case 2:
+        return { from: `${year}-04-01`, to: `${year}-06-30`, label: 'Apr 1 - Jun 30' };
+      case 3:
+        return { from: `${year}-07-01`, to: `${year}-09-30`, label: 'Jul 1 - Sep 30' };
+      case 4:
+        return { from: `${year}-10-01`, to: `${year}-12-31`, label: 'Oct 1 - Dec 31' };
+    }
+  };
+
+  const isQuarterActive = (year: number, quarter: 1 | 2 | 3 | 4) => {
+    const { from, to } = getQuarterDates(year, quarter);
+    return dateFromFilter === from && dateToFilter === to;
+  };
+
+  const handleQuarterPreset = (year: number, quarter: 1 | 2 | 3 | 4) => {
+    const { from, to } = getQuarterDates(year, quarter);
+    if (dateFromFilter === from && dateToFilter === to) {
+      setDateFromFilter('');
+      setDateToFilter('');
+    } else {
+      setDateFromFilter(from);
+      setDateToFilter(to);
+    }
+  };
+
+  const handleYearPreset = (year: number) => {
+    const from = `${year}-01-01`;
+    const to = `${year}-12-31`;
+    setQuarterYear(year);
+    if (dateFromFilter === from && dateToFilter === to) {
+      setDateFromFilter('');
+      setDateToFilter('');
+    } else {
+      setDateFromFilter(from);
+      setDateToFilter(to);
+    }
+  };
+
+  const handleQuickDatePreset = (preset: 'today' | 'yesterday' | 'all') => {
     if (preset === 'today') {
       if (isTodayActive) {
         setDateFromFilter('');
@@ -167,24 +240,6 @@ export default function ReportsPage() {
     } else if (preset === 'all') {
       setDateFromFilter('');
       setDateToFilter('');
-    } else if (preset === '2026') {
-      setDateFromFilter('2026-01-01');
-      setDateToFilter('2026-12-31');
-    } else if (preset === '2025') {
-      setDateFromFilter('2025-01-01');
-      setDateToFilter('2025-12-31');
-    } else if (preset === 'q1_2025') {
-      setDateFromFilter('2025-01-01');
-      setDateToFilter('2025-03-31');
-    } else if (preset === 'q2_2025') {
-      setDateFromFilter('2025-04-01');
-      setDateToFilter('2025-06-30');
-    } else if (preset === 'q3_2025') {
-      setDateFromFilter('2025-07-01');
-      setDateToFilter('2025-09-30');
-    } else if (preset === 'q4_2025') {
-      setDateFromFilter('2025-10-01');
-      setDateToFilter('2025-12-31');
     }
   };
 
@@ -290,95 +345,94 @@ export default function ReportsPage() {
           <div className="flex flex-wrap items-center gap-1.5 text-xs pt-2 border-t border-slate-100">
             <span className="text-slate-500 font-medium text-[11px] mr-1">Quick Date Presets:</span>
             <button
+              type="button"
               onClick={() => handleQuickDatePreset('today')}
               className={`px-2.5 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
                 isTodayActive
-                  ? 'bg-blue-600 text-white'
+                  ? 'bg-blue-600 text-white font-semibold'
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
               }`}
             >
               Today
             </button>
             <button
+              type="button"
               onClick={() => handleQuickDatePreset('yesterday')}
               className={`px-2.5 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
                 isYesterdayActive
-                  ? 'bg-blue-600 text-white'
+                  ? 'bg-blue-600 text-white font-semibold'
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
               }`}
             >
               Yesterday
             </button>
             <button
+              type="button"
               onClick={() => handleQuickDatePreset('all')}
               className={`px-2.5 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
                 !dateFromFilter && !dateToFilter
-                  ? 'bg-blue-600 text-white'
+                  ? 'bg-blue-600 text-white font-semibold'
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
               }`}
             >
               All Time
             </button>
-            <button
-              onClick={() => handleQuickDatePreset('2026')}
-              className={`px-2.5 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
-                dateFromFilter === '2026-01-01' && dateToFilter === '2026-12-31'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              }`}
-            >
-              Year 2026
-            </button>
-            <button
-              onClick={() => handleQuickDatePreset('2025')}
-              className={`px-2.5 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
-                dateFromFilter === '2025-01-01' && dateToFilter === '2025-12-31'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              }`}
-            >
-              Year 2025
-            </button>
-            <button
-              onClick={() => handleQuickDatePreset('q1_2025')}
-              className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
-                dateFromFilter === '2025-01-01' && dateToFilter === '2025-03-31'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              }`}
-            >
-              Q1 2025
-            </button>
-            <button
-              onClick={() => handleQuickDatePreset('q2_2025')}
-              className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
-                dateFromFilter === '2025-04-01' && dateToFilter === '2025-06-30'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              }`}
-            >
-              Q2 2025
-            </button>
-            <button
-              onClick={() => handleQuickDatePreset('q3_2025')}
-              className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
-                dateFromFilter === '2025-07-01' && dateToFilter === '2025-09-30'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              }`}
-            >
-              Q3 2025
-            </button>
-            <button
-              onClick={() => handleQuickDatePreset('q4_2025')}
-              className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
-                dateFromFilter === '2025-10-01' && dateToFilter === '2025-12-31'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              }`}
-            >
-              Q4 2025
-            </button>
+
+            {/* Dynamic Year Chips */}
+            {availableYears.map((year) => {
+              const isYearActive = dateFromFilter === `${year}-01-01` && dateToFilter === `${year}-12-31`;
+              return (
+                <button
+                  key={year}
+                  type="button"
+                  onClick={() => handleYearPreset(year)}
+                  className={`px-2.5 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
+                    isYearActive
+                      ? 'bg-blue-600 text-white font-semibold shadow-2xs'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  }`}
+                >
+                  Year {year}
+                </button>
+              );
+            })}
+
+            {/* Dynamic Quarters Group with Year Selector */}
+            <div className="inline-flex items-center gap-1.5 pl-2 border-l border-slate-200 ml-1">
+              <span className="text-slate-500 font-medium text-[11px]">Quarters:</span>
+              <select
+                value={quarterYear}
+                onChange={(e) => setQuarterYear(Number(e.target.value))}
+                className="bg-white border border-slate-300 text-slate-700 font-semibold text-[11px] rounded px-1.5 py-0.5 focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer shadow-2xs"
+                title="Select Year for Quarters"
+              >
+                {availableYears.map((yr) => (
+                  <option key={yr} value={yr}>
+                    {yr}
+                  </option>
+                ))}
+              </select>
+
+              {[1, 2, 3, 4].map((q) => {
+                const isActive = isQuarterActive(quarterYear, q as 1 | 2 | 3 | 4);
+                const qDates = getQuarterDates(quarterYear, q as 1 | 2 | 3 | 4);
+                return (
+                  <button
+                    key={q}
+                    type="button"
+                    onClick={() => handleQuarterPreset(quarterYear, q as 1 | 2 | 3 | 4)}
+                    className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
+                      isActive
+                        ? 'bg-blue-600 text-white font-semibold shadow-2xs'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    }`}
+                    title={`Filter by Q${q} ${quarterYear} (${qDates.label})`}
+                  >
+                    Q{q} {quarterYear}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
 
