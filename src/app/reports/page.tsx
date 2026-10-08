@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import {
   FileSpreadsheet,
@@ -38,9 +38,32 @@ export default function ReportsPage() {
   const [totalTrackedRevenue, setTotalTrackedRevenue] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
   const [dateFromFilter, setDateFromFilter] = useState('');
   const [dateToFilter, setDateToFilter] = useState('');
+
+  // Date helpers for Today and Yesterday
+  const getTodayString = () => {
+    const d = new Date();
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  const getYesterdayString = () => {
+    const d = new Date();
+    d.setDate(d.getDate() - 1);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  const todayStr = useMemo(() => getTodayString(), []);
+  const yesterdayStr = useMemo(() => getYesterdayString(), []);
+
+  const isTodayActive = Boolean(dateFromFilter && dateFromFilter === todayStr && dateToFilter === todayStr);
+  const isYesterdayActive = Boolean(dateFromFilter && dateFromFilter === yesterdayStr && dateToFilter === yesterdayStr);
 
   // Batch upload modal state
   const [isBatchModalOpen, setIsBatchModalOpen] = useState(false);
@@ -61,7 +84,6 @@ export default function ReportsPage() {
       const params = new URLSearchParams();
       if (activeDealership) params.append('dealershipId', activeDealership._id);
       if (searchTerm) params.append('search', searchTerm);
-      if (statusFilter) params.append('status', statusFilter);
       if (dateFromFilter) params.append('dateFrom', dateFromFilter);
       if (dateToFilter) params.append('dateTo', dateToFilter);
 
@@ -81,7 +103,7 @@ export default function ReportsPage() {
 
   useEffect(() => {
     fetchReports();
-  }, [activeDealership, searchTerm, statusFilter, dateFromFilter, dateToFilter]);
+  }, [activeDealership, searchTerm, dateFromFilter, dateToFilter]);
 
   const handleUpdateMetadata = async () => {
     if (!editingReport) return;
@@ -124,17 +146,33 @@ export default function ReportsPage() {
   };
 
   const handleQuickDatePreset = (
-    preset: 'all' | '2025' | '2026' | 'q1_2025' | 'q2_2025' | 'q3_2025' | 'q4_2025'
+    preset: 'today' | 'yesterday' | 'all' | '2026' | '2025' | 'q1_2025' | 'q2_2025' | 'q3_2025' | 'q4_2025'
   ) => {
-    if (preset === 'all') {
+    if (preset === 'today') {
+      if (isTodayActive) {
+        setDateFromFilter('');
+        setDateToFilter('');
+      } else {
+        setDateFromFilter(todayStr);
+        setDateToFilter(todayStr);
+      }
+    } else if (preset === 'yesterday') {
+      if (isYesterdayActive) {
+        setDateFromFilter('');
+        setDateToFilter('');
+      } else {
+        setDateFromFilter(yesterdayStr);
+        setDateToFilter(yesterdayStr);
+      }
+    } else if (preset === 'all') {
       setDateFromFilter('');
       setDateToFilter('');
-    } else if (preset === '2025') {
-      setDateFromFilter('2025-01-01');
-      setDateToFilter('2025-12-31');
     } else if (preset === '2026') {
       setDateFromFilter('2026-01-01');
       setDateToFilter('2026-12-31');
+    } else if (preset === '2025') {
+      setDateFromFilter('2025-01-01');
+      setDateToFilter('2025-12-31');
     } else if (preset === 'q1_2025') {
       setDateFromFilter('2025-01-01');
       setDateToFilter('2025-03-31');
@@ -187,8 +225,37 @@ export default function ReportsPage() {
               />
             </div>
 
-            {/* Date Range Inputs */}
+            {/* Quick Days & Date Range Inputs */}
             <div className="flex flex-wrap items-center gap-2 w-full md:w-auto text-xs">
+              {/* Today / Yesterday Toggle Pills */}
+              <div className="inline-flex items-center p-0.5 rounded-md bg-slate-100 border border-slate-200 shadow-2xs">
+                <button
+                  type="button"
+                  onClick={() => handleQuickDatePreset('today')}
+                  className={`px-3 py-1 text-xs font-semibold rounded transition-colors cursor-pointer ${
+                    isTodayActive
+                      ? 'bg-blue-600 text-white shadow-2xs'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/70'
+                  }`}
+                  title="Filter by reports from Today"
+                >
+                  Today
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleQuickDatePreset('yesterday')}
+                  className={`px-3 py-1 text-xs font-semibold rounded transition-colors cursor-pointer ${
+                    isYesterdayActive
+                      ? 'bg-blue-600 text-white shadow-2xs'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/70'
+                  }`}
+                  title="Filter by reports from Yesterday"
+                >
+                  Yesterday
+                </button>
+              </div>
+
+              {/* Custom Date Range Picker */}
               <div className="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1 rounded-md border border-slate-200">
                 <Calendar className="w-3.5 h-3.5 text-blue-600" />
                 <span className="text-slate-600 font-medium">From:</span>
@@ -196,42 +263,52 @@ export default function ReportsPage() {
                   type="date"
                   value={dateFromFilter}
                   onChange={(e) => setDateFromFilter(e.target.value)}
-                  className="px-1.5 py-0.5 border border-slate-300 rounded text-xs bg-white text-slate-800"
+                  className="px-1.5 py-0.5 border border-slate-300 rounded text-xs bg-white text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
                 />
                 <span className="text-slate-600 font-medium ml-1">To:</span>
                 <input
                   type="date"
                   value={dateToFilter}
                   onChange={(e) => setDateToFilter(e.target.value)}
-                  className="px-1.5 py-0.5 border border-slate-300 rounded text-xs bg-white text-slate-800"
+                  className="px-1.5 py-0.5 border border-slate-300 rounded text-xs bg-white text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
                 />
                 {(dateFromFilter || dateToFilter) && (
                   <button
+                    type="button"
                     onClick={() => handleQuickDatePreset('all')}
-                    className="p-1 text-slate-400 hover:text-rose-600 ml-1"
+                    className="p-1 text-slate-400 hover:text-rose-600 ml-1 transition-colors cursor-pointer"
                     title="Clear Date Filter"
                   >
                     <X className="w-3 h-3" />
                   </button>
                 )}
               </div>
-
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="text-xs px-2.5 py-1.5 border border-slate-300 rounded-md bg-white text-slate-700 font-medium"
-              >
-                <option value="">All Statuses</option>
-                <option value="IMPORTED">Imported</option>
-                <option value="DRAFT">Draft</option>
-                <option value="ARCHIVED">Archived</option>
-              </select>
             </div>
           </div>
 
           {/* Quick Date Range Chips */}
           <div className="flex flex-wrap items-center gap-1.5 text-xs pt-2 border-t border-slate-100">
             <span className="text-slate-500 font-medium text-[11px] mr-1">Quick Date Presets:</span>
+            <button
+              onClick={() => handleQuickDatePreset('today')}
+              className={`px-2.5 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
+                isTodayActive
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              }`}
+            >
+              Today
+            </button>
+            <button
+              onClick={() => handleQuickDatePreset('yesterday')}
+              className={`px-2.5 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
+                isYesterdayActive
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              }`}
+            >
+              Yesterday
+            </button>
             <button
               onClick={() => handleQuickDatePreset('all')}
               className={`px-2.5 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
@@ -243,16 +320,6 @@ export default function ReportsPage() {
               All Time
             </button>
             <button
-              onClick={() => handleQuickDatePreset('2025')}
-              className={`px-2.5 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
-                dateFromFilter === '2025-01-01' && dateToFilter === '2025-12-31'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              }`}
-            >
-              Year 2025
-            </button>
-            <button
               onClick={() => handleQuickDatePreset('2026')}
               className={`px-2.5 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
                 dateFromFilter === '2026-01-01' && dateToFilter === '2026-12-31'
@@ -261,6 +328,16 @@ export default function ReportsPage() {
               }`}
             >
               Year 2026
+            </button>
+            <button
+              onClick={() => handleQuickDatePreset('2025')}
+              className={`px-2.5 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
+                dateFromFilter === '2025-01-01' && dateToFilter === '2025-12-31'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              }`}
+            >
+              Year 2025
             </button>
             <button
               onClick={() => handleQuickDatePreset('q1_2025')}
