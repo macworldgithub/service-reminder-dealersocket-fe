@@ -60,11 +60,18 @@ export const Header: React.FC<HeaderProps> = ({
       <div className="flex items-center gap-2 sm:gap-3 shrink-0">
         {actions}
         <div className="h-4 w-px bg-slate-200 hidden sm:block" />
-        <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-50 text-slate-700 text-xs font-medium border border-slate-200/80 shadow-2xs">
-          <div className="w-5 h-5 rounded-md bg-blue-50 text-blue-600 flex items-center justify-center">
+        <div className="hidden sm:flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-slate-50 text-slate-700 text-xs font-medium border border-slate-200/80 shadow-2xs">
+          <div className="w-5 h-5 rounded-md bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
             <Building2 className="w-3.5 h-3.5" strokeWidth={1.75} />
           </div>
-          <span className="truncate max-w-[140px] md:max-w-[200px]">{activeDealership?.name || 'All Dealerships'}</span>
+          <span className="font-semibold text-slate-900 truncate max-w-[150px] md:max-w-[220px]">
+            {activeDealership?.name || 'South Morang Hyundai'}
+          </span>
+          {activeDealership?.code && (
+            <span className="text-[10px] font-mono font-medium text-slate-500 bg-slate-200/60 px-1.5 py-0.5 rounded shrink-0 whitespace-nowrap">
+              {activeDealership.code}
+            </span>
+          )}
         </div>
         <button
           type="button"

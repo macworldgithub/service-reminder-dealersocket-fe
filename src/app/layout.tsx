@@ -4,8 +4,8 @@ import { AuthProvider } from '@/lib/authContext';
 import { ReactQueryProvider } from '@/lib/queryClient';
 
 export const metadata: Metadata = {
-  title: 'DealerSocket Operations Hub | Campaign Ingestion & Reports',
-  description: 'Enterprise automotive operational platform for DealerSocket campaign ingestion, data mapping, and records management.',
+  title: 'ServicePulse | Campaign Intelligence & Revenue Platform',
+  description: 'Automotive campaign intelligence, DealerSocket Closed RO ingestion, and service revenue analytics.',
 };
 
 export default function RootLayout({

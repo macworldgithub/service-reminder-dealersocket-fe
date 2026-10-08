@@ -31,7 +31,7 @@ import {
 } from 'lucide-react';
 
 export default function SettingsPage() {
-  const { activeDealership, user } = useAuth();
+  const { activeDealership, user, setActiveDealership } = useAuth();
 
   const [activeTab, setActiveTab] = useState<'general' | 'pdf' | 'integrations'>('general');
   const [isSaving, setIsSaving] = useState(false);
@@ -43,6 +43,13 @@ export default function SettingsPage() {
   const [dealershipCode, setDealershipCode] = useState(activeDealership?.code || 'SMH-01');
   const [timezone, setTimezone] = useState('Australia/Melbourne (UTC+10:00)');
   const [currency, setCurrency] = useState('AUD ($)');
+
+  useEffect(() => {
+    if (activeDealership) {
+      setDealershipName(activeDealership.name);
+      setDealershipCode(activeDealership.code);
+    }
+  }, [activeDealership]);
   const [defaultInterval, setDefaultInterval] = useState('6 Months / 10,000 km');
   const [supportEmail, setSupportEmail] = useState('service@southmoranghyundai.com.au');
   const [supportPhone, setSupportPhone] = useState('+61 3 8401 2200');
@@ -164,12 +171,24 @@ export default function SettingsPage() {
     setIsSaving(true);
     setSaveSuccess(false);
 
-    // Simulate save / mock API call
-    setTimeout(() => {
-      setIsSaving(false);
+    try {
+      if (activeDealership?._id) {
+        const res = await api.patch(`/dealerships/${activeDealership._id}`, {
+          name: dealershipName,
+          code: dealershipCode,
+        });
+        if (res.data?.success && res.data.data) {
+          setActiveDealership(res.data.data);
+        }
+      }
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 4000);
-    }, 600);
+    } catch (err: any) {
+      console.error('Failed to update dealership settings', err);
+      alert('Failed to update dealership settings: ' + (err.response?.data?.message || err.message));
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (

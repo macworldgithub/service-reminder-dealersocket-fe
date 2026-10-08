@@ -44,12 +44,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ isMobile, onClose }) => {
         <Link href="/" className="flex items-center gap-3 group">
           <DealerSocketLogo size="md" withGlow />
           <div>
-            <div className="text-sm font-semibold text-white tracking-tight leading-none group-hover:text-blue-200 transition-colors">
-              DealerSocket
+            <div className="text-base font-bold text-white tracking-tight leading-none group-hover:text-blue-300 transition-colors flex items-center">
+              <span>Service</span>
+              <span className="text-blue-400">Pulse</span>
             </div>
-            <div className="text-[10px] text-slate-400 font-medium tracking-wider uppercase mt-1 flex items-center gap-1">
-              <span>Operations Hub</span>
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block animate-pulse" />
+            <div className="text-[10px] text-slate-400 font-semibold tracking-wider uppercase mt-1 flex items-center gap-1.5">
+              <span>Campaign Intelligence</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block animate-pulse" />
             </div>
           </div>
         </Link>
@@ -57,22 +58,35 @@ export const Sidebar: React.FC<SidebarProps> = ({ isMobile, onClose }) => {
 
       {/* Active Dealership */}
       <div className="p-3 border-b border-slate-800/80">
-        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-2 mb-1.5 flex items-center justify-between">
-          <span>Active Dealership</span>
-          <span className="text-[9px] text-emerald-400 font-semibold bg-emerald-950/60 border border-emerald-800/50 px-1 py-0.2 rounded">LIVE</span>
-        </div>
-        <div className="w-full flex items-center justify-between px-2.5 py-2 rounded-lg bg-slate-800/60 border border-slate-700/60 hover:border-slate-600/80 transition-colors">
-          <div className="flex items-center gap-2 truncate">
-            <div className="w-6 h-6 rounded-md bg-blue-500/10 border border-blue-500/20 flex items-center justify-center shrink-0">
-              <Building2 className="w-3.5 h-3.5 text-blue-400 shrink-0" strokeWidth={1.75} />
-            </div>
-            <span className="text-xs font-medium text-white truncate">
-              {activeDealership?.name || 'South Morang Hyundai'}
-            </span>
-          </div>
-          <span className="text-[10px] font-mono font-medium text-slate-400 bg-slate-700/60 px-1.5 py-0.5 rounded border border-slate-600/40">
-            {activeDealership?.code || 'SMH-01'}
+        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1 mb-2 flex items-center justify-between">
+          <span className="flex items-center gap-1.5">Active Store</span>
+          <span className="text-[9px] text-emerald-400 font-semibold bg-emerald-950/70 border border-emerald-800/50 px-1.5 py-0.5 rounded-full flex items-center gap-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            LIVE
           </span>
+        </div>
+        <div className="group rounded-xl bg-gradient-to-b from-slate-800/80 to-slate-900/90 border border-slate-700/70 hover:border-blue-500/40 p-2.5 transition-all shadow-sm">
+          <div className="flex items-start gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600/25 to-indigo-600/30 border border-blue-500/30 flex items-center justify-center shrink-0 mt-0.5 text-blue-400 font-bold text-xs tracking-wider shadow-inner">
+              {activeDealership?.code ? activeDealership.code.replace(/[^A-Za-z]/g, '').slice(0, 3) || 'SMH' : 'SMH'}
+            </div>
+            <div className="min-w-0 flex-1">
+              <div
+                className="text-xs font-semibold text-white tracking-tight leading-snug group-hover:text-blue-200 transition-colors break-words"
+                title={activeDealership?.name || 'South Morang Hyundai'}
+              >
+                {activeDealership?.name || 'South Morang Hyundai'}
+              </div>
+              <div className="mt-1 flex items-center gap-1.5 flex-wrap">
+                <span className="inline-flex items-center text-[10px] font-mono font-semibold text-blue-300 bg-blue-950/80 border border-blue-800/60 px-1.5 py-0.5 rounded tracking-wide shrink-0 whitespace-nowrap">
+                  {activeDealership?.code || 'SMH-01'}
+                </span>
+                <span className="text-[10px] text-slate-400 truncate">
+                  DealerSocket Feed
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
