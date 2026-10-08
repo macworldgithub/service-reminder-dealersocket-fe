@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -59,6 +59,41 @@ export default function ReportDetailPage() {
   const [gridDateTo, setGridDateTo] = useState('');
   const [isExportingPdf, setIsExportingPdf] = useState(false);
   const [isExportingExcel, setIsExportingExcel] = useState(false);
+
+  // Dynamic Year Presets state
+  const [selectedPresetYear, setSelectedPresetYear] = useState<number>(() => new Date().getFullYear());
+
+  // Derive available years from report coverage, records, or upload date
+  const reportYears = useMemo(() => {
+    const years = new Set<number>();
+    if (report?.reportDateFrom) {
+      const y = new Date(report.reportDateFrom).getFullYear();
+      if (!isNaN(y)) years.add(y);
+    }
+    if (report?.reportDateTo) {
+      const y = new Date(report.reportDateTo).getFullYear();
+      if (!isNaN(y)) years.add(y);
+    }
+    if (revenueLookup?.monthlyBreakdown) {
+      revenueLookup.monthlyBreakdown.forEach((m) => {
+        if (m.year) years.add(m.year);
+      });
+    }
+    if (report?.createdAt) {
+      const y = new Date(report.createdAt).getFullYear();
+      if (!isNaN(y)) years.add(y);
+    }
+    if (years.size === 0) {
+      years.add(new Date().getFullYear());
+    }
+    return Array.from(years).sort((a, b) => b - a);
+  }, [report, revenueLookup]);
+
+  useEffect(() => {
+    if (reportYears.length > 0 && !reportYears.includes(selectedPresetYear)) {
+      setSelectedPresetYear(reportYears[0]);
+    }
+  }, [reportYears, selectedPresetYear]);
 
   const handleExportPdf = async () => {
     if (!report) return;
@@ -150,30 +185,27 @@ export default function ReportDetailPage() {
     if (id) fetchReportData();
   }, [id]);
 
-  const applyDatePreset = (preset: 'entire' | '2025' | '2026' | 'q1_2025' | 'q2_2025' | 'q3_2025' | 'q4_2025') => {
+  const applyDatePreset = (preset: 'entire' | 'year' | 'q1' | 'q2' | 'q3' | 'q4', targetYear = selectedPresetYear) => {
     let f = '';
     let t = '';
     if (preset === 'entire') {
       f = '';
       t = '';
-    } else if (preset === '2025') {
-      f = '2025-01-01';
-      t = '2025-12-31';
-    } else if (preset === '2026') {
-      f = '2026-01-01';
-      t = '2026-12-31';
-    } else if (preset === 'q1_2025') {
-      f = '2025-01-01';
-      t = '2025-03-31';
-    } else if (preset === 'q2_2025') {
-      f = '2025-04-01';
-      t = '2025-06-30';
-    } else if (preset === 'q3_2025') {
-      f = '2025-07-01';
-      t = '2025-09-30';
-    } else if (preset === 'q4_2025') {
-      f = '2025-10-01';
-      t = '2025-12-31';
+    } else if (preset === 'year') {
+      f = `${targetYear}-01-01`;
+      t = `${targetYear}-12-31`;
+    } else if (preset === 'q1') {
+      f = `${targetYear}-01-01`;
+      t = `${targetYear}-03-31`;
+    } else if (preset === 'q2') {
+      f = `${targetYear}-04-01`;
+      t = `${targetYear}-06-30`;
+    } else if (preset === 'q3') {
+      f = `${targetYear}-07-01`;
+      t = `${targetYear}-09-30`;
+    } else if (preset === 'q4') {
+      f = `${targetYear}-10-01`;
+      t = `${targetYear}-12-31`;
     }
     setLookupDateFrom(f);
     setLookupDateTo(t);
@@ -409,55 +441,75 @@ export default function ReportDetailPage() {
                     >
                       Entire Period
                     </button>
+
+                    {/* Year dropdown if report touches multiple years */}
+                    {reportYears.length > 1 && (
+                      <select
+                        value={selectedPresetYear}
+                        onChange={(e) => {
+                          const y = Number(e.target.value);
+                          setSelectedPresetYear(y);
+                          applyDatePreset('year', y);
+                        }}
+                        className="bg-white border border-slate-200 text-slate-700 text-[11px] font-semibold rounded px-1.5 py-0.5 cursor-pointer hover:border-slate-300"
+                      >
+                        {reportYears.map((yr) => (
+                          <option key={yr} value={yr}>
+                            {yr}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+
                     <button
-                      onClick={() => applyDatePreset('2025')}
+                      onClick={() => applyDatePreset('year', selectedPresetYear)}
                       className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
-                        lookupDateFrom === '2025-01-01' && lookupDateTo === '2025-12-31'
+                        lookupDateFrom === `${selectedPresetYear}-01-01` && lookupDateTo === `${selectedPresetYear}-12-31`
                           ? 'bg-blue-600 text-white'
                           : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
                       }`}
                     >
-                      Year 2025
+                      Year {selectedPresetYear}
                     </button>
                     <button
-                      onClick={() => applyDatePreset('q1_2025')}
+                      onClick={() => applyDatePreset('q1', selectedPresetYear)}
                       className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
-                        lookupDateFrom === '2025-01-01' && lookupDateTo === '2025-03-31'
+                        lookupDateFrom === `${selectedPresetYear}-01-01` && lookupDateTo === `${selectedPresetYear}-03-31`
                           ? 'bg-blue-600 text-white'
                           : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
                       }`}
                     >
-                      Q1 2025
+                      Q1 {selectedPresetYear}
                     </button>
                     <button
-                      onClick={() => applyDatePreset('q2_2025')}
+                      onClick={() => applyDatePreset('q2', selectedPresetYear)}
                       className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
-                        lookupDateFrom === '2025-04-01' && lookupDateTo === '2025-06-30'
+                        lookupDateFrom === `${selectedPresetYear}-04-01` && lookupDateTo === `${selectedPresetYear}-06-30`
                           ? 'bg-blue-600 text-white'
                           : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
                       }`}
                     >
-                      Q2 2025
+                      Q2 {selectedPresetYear}
                     </button>
                     <button
-                      onClick={() => applyDatePreset('q3_2025')}
+                      onClick={() => applyDatePreset('q3', selectedPresetYear)}
                       className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
-                        lookupDateFrom === '2025-07-01' && lookupDateTo === '2025-09-30'
+                        lookupDateFrom === `${selectedPresetYear}-07-01` && lookupDateTo === `${selectedPresetYear}-09-30`
                           ? 'bg-blue-600 text-white'
                           : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
                       }`}
                     >
-                      Q3 2025
+                      Q3 {selectedPresetYear}
                     </button>
                     <button
-                      onClick={() => applyDatePreset('q4_2025')}
+                      onClick={() => applyDatePreset('q4', selectedPresetYear)}
                       className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
-                        lookupDateFrom === '2025-10-01' && lookupDateTo === '2025-12-31'
+                        lookupDateFrom === `${selectedPresetYear}-10-01` && lookupDateTo === `${selectedPresetYear}-12-31`
                           ? 'bg-blue-600 text-white'
                           : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
                       }`}
                     >
-                      Q4 2025
+                      Q4 {selectedPresetYear}
                     </button>
                   </div>
                 </div>
