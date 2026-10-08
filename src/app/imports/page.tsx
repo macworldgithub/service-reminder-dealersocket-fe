@@ -194,8 +194,9 @@ export default function ImportsHistoryPage() {
                 </table>
               </div>
             ) : (
-              <div className="p-3 bg-emerald-50 border border-emerald-200 rounded text-emerald-800 font-medium">
-                ✓ All rows passed schema validation with 0 fatal errors.
+              <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-800 font-medium flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" strokeWidth={1.75} />
+                <span>All rows passed schema validation with 0 fatal errors.</span>
               </div>
             )}
           </div>

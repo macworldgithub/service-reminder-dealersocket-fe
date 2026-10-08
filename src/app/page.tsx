@@ -91,12 +91,12 @@ export default function DashboardPage() {
             variant="outline"
             size="sm"
             onClick={() => setIsBatchModalOpen(true)}
-            icon={<Layers className="w-4 h-4 text-blue-600" />}
+            icon={<Layers className="w-4 h-4 text-blue-600" strokeWidth={1.75} />}
           >
             Batch Upload PDFs
           </Button>
           <Link href="/imports/new">
-            <Button size="sm" icon={<UploadCloud className="w-4 h-4" />}>
+            <Button size="sm" icon={<UploadCloud className="w-4 h-4" strokeWidth={1.75} />}>
               Upload Single Report
             </Button>
           </Link>
@@ -105,12 +105,14 @@ export default function DashboardPage() {
     >
       {/* 4 Clean Operational Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-xs">
+        <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-xs hover:border-slate-300 transition-colors">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">
+            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
               Total Ingested Reports
             </span>
-            <FileSpreadsheet className="w-4 h-4 text-blue-600" />
+            <div className="w-8 h-8 rounded-lg bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 shadow-2xs">
+              <FileSpreadsheet className="w-4 h-4" strokeWidth={1.75} />
+            </div>
           </div>
           <div className="mt-2 text-2xl font-bold text-slate-900">{totalReports}</div>
           <div className="mt-1 flex items-center text-xs text-slate-500">
@@ -120,12 +122,14 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-xs">
+        <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-xs hover:border-slate-300 transition-colors">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">
+            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
               Total Records Managed
             </span>
-            <TrendingUp className="w-4 h-4 text-emerald-600" />
+            <div className="w-8 h-8 rounded-lg bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 shadow-2xs">
+              <TrendingUp className="w-4 h-4" strokeWidth={1.75} />
+            </div>
           </div>
           <div className="mt-2 text-2xl font-bold text-slate-900">
             {totalRecords.toLocaleString()}
@@ -135,12 +139,14 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-xs">
+        <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-xs hover:border-slate-300 transition-colors">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">
+            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
               Latest Service Coverage
             </span>
-            <Calendar className="w-4 h-4 text-blue-600" />
+            <div className="w-8 h-8 rounded-lg bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 shadow-2xs">
+              <Calendar className="w-4 h-4" strokeWidth={1.75} />
+            </div>
           </div>
           <div className="mt-2 text-base font-bold text-slate-900 truncate">
             {latestPeriodText}
@@ -150,12 +156,14 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-xs">
+        <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-xs hover:border-slate-300 transition-colors">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">
+            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
               Active Dealership
             </span>
-            <Building2 className="w-4 h-4 text-blue-600" />
+            <div className="w-8 h-8 rounded-lg bg-purple-50 border border-purple-100 flex items-center justify-center text-purple-600 shadow-2xs">
+              <Building2 className="w-4 h-4" strokeWidth={1.75} />
+            </div>
           </div>
           <div className="mt-2 text-base font-bold text-slate-900 truncate">
             {activeDealership?.name || 'All Dealerships'}
@@ -178,13 +186,13 @@ export default function DashboardPage() {
           <div className="flex items-center gap-3">
             <button
               onClick={() => setIsBatchModalOpen(true)}
-              className="text-xs font-medium text-blue-600 hover:text-blue-700 flex items-center gap-1 cursor-pointer"
+              className="text-xs font-medium text-blue-600 hover:text-blue-700 flex items-center gap-1.5 cursor-pointer"
             >
-              <Layers className="w-3.5 h-3.5" /> Batch Upload
+              <Layers className="w-3.5 h-3.5" strokeWidth={1.75} /> Batch Upload
             </button>
             <span className="text-slate-300">·</span>
             <Link href="/reports" className="text-xs font-medium text-blue-600 hover:text-blue-700 flex items-center gap-1">
-              View All <ArrowRight className="w-3.5 h-3.5" />
+              View All <ArrowRight className="w-3.5 h-3.5" strokeWidth={1.75} />
             </Link>
           </div>
         </div>
@@ -235,8 +243,8 @@ export default function DashboardPage() {
                       {/* Prominent Visual Date Badge */}
                       <td className="py-3 px-4">
                         {hasDate ? (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
-                            <Calendar className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200 shadow-2xs">
+                            <Calendar className="w-3.5 h-3.5 text-blue-600 shrink-0" strokeWidth={1.75} />
                             {`${formatDate(r.reportDateFrom)} – ${formatDate(r.reportDateTo)}`}
                           </span>
                         ) : (
@@ -256,7 +264,7 @@ export default function DashboardPage() {
 
                       <td className="py-3 px-4 text-slate-500">
                         <div className="flex items-center gap-1 text-[11px]">
-                          <Clock className="w-3 h-3 text-slate-400 shrink-0" />
+                          <Clock className="w-3 h-3 text-slate-400 shrink-0" strokeWidth={1.75} />
                           <span>{formatDate(r.createdAt)}</span>
                         </div>
                       </td>
@@ -271,7 +279,7 @@ export default function DashboardPage() {
                         <div className="flex items-center justify-end gap-1.5">
                           <Link href={`/reports/${r._id}`}>
                             <Button variant="outline" size="sm" className="h-7 px-2">
-                              <Eye className="w-3.5 h-3.5 mr-1" /> View
+                              <Eye className="w-3.5 h-3.5 mr-1" strokeWidth={1.75} /> View
                             </Button>
                           </Link>
                           <Button
@@ -286,7 +294,7 @@ export default function DashboardPage() {
                               }).catch((err) => alert('Failed to export PDF: ' + err.message));
                             }}
                           >
-                            <Download className="w-3.5 h-3.5" />
+                            <Download className="w-3.5 h-3.5" strokeWidth={1.75} />
                           </Button>
                         </div>
                       </td>

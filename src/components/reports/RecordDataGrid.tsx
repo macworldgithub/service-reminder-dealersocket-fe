@@ -347,10 +347,10 @@ export const RecordDataGrid: React.FC<RecordDataGridProps> = ({
                   setDateTo('');
                   setPage(1);
                 }}
-                className="text-slate-400 hover:text-rose-600 text-xs ml-1 font-bold"
+                className="p-0.5 text-slate-400 hover:text-rose-600 rounded transition-colors ml-1 cursor-pointer"
                 title="Reset date filter"
               >
-                ✕
+                <X className="w-3.5 h-3.5" strokeWidth={2} />
               </button>
             )}
           </div>
@@ -358,7 +358,7 @@ export const RecordDataGrid: React.FC<RecordDataGridProps> = ({
           {/* Filtered Revenue Display */}
           {filteredRevenue !== null && (
             <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 shadow-2xs font-medium">
-              <DollarSign className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+              <DollarSign className="w-3.5 h-3.5 text-emerald-600 shrink-0" strokeWidth={1.75} />
               <span>
                 Filtered RO: <strong>{formatCurrency(filteredRevenue)}</strong>
               </span>
@@ -396,7 +396,7 @@ export const RecordDataGrid: React.FC<RecordDataGridProps> = ({
               variant="outline"
               size="sm"
               onClick={() => setShowColMenu(!showColMenu)}
-              icon={<SlidersHorizontal className="w-3.5 h-3.5" />}
+              icon={<SlidersHorizontal className="w-3.5 h-3.5" strokeWidth={1.75} />}
             >
               Columns
             </Button>
@@ -420,7 +420,7 @@ export const RecordDataGrid: React.FC<RecordDataGridProps> = ({
             )}
           </div>
 
-          <Button size="sm" onClick={() => setIsAddModalOpen(true)} icon={<Plus className="w-3.5 h-3.5" />}>
+          <Button size="sm" onClick={() => setIsAddModalOpen(true)} icon={<Plus className="w-3.5 h-3.5" strokeWidth={2} />}>
             Add Record
           </Button>
         </div>
@@ -672,34 +672,34 @@ export const RecordDataGrid: React.FC<RecordDataGridProps> = ({
                           <div className="flex items-center justify-end gap-1">
                             <button
                               onClick={(e) => handleSaveInlineEdit(r._id, e)}
-                              className="p-1 rounded text-emerald-600 hover:bg-emerald-50"
+                              className="p-1.5 rounded-md text-emerald-600 hover:bg-emerald-50 border border-transparent hover:border-emerald-200 transition-colors"
                               title="Save inline edit"
                             >
-                              <Check className="w-4 h-4" />
+                              <Check className="w-3.5 h-3.5" strokeWidth={2.5} />
                             </button>
                             <button
                               onClick={() => setEditingRowId(null)}
-                              className="p-1 rounded text-slate-400 hover:bg-slate-100"
+                              className="p-1.5 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 border border-transparent transition-colors"
                               title="Cancel"
                             >
-                              <X className="w-4 h-4" />
+                              <X className="w-3.5 h-3.5" strokeWidth={2} />
                             </button>
                           </div>
                         ) : (
                           <div className="flex items-center justify-end gap-1">
                             <button
                               onClick={(e) => handleStartInlineEdit(r, e)}
-                              className="p-1 rounded text-slate-400 hover:text-blue-600 hover:bg-slate-100"
+                              className="p-1.5 rounded-md text-slate-400 hover:text-blue-600 hover:bg-blue-50 border border-transparent hover:border-blue-100 transition-colors"
                               title="Inline edit"
                             >
-                              <Edit2 className="w-3.5 h-3.5" />
+                              <Edit2 className="w-3.5 h-3.5" strokeWidth={1.75} />
                             </button>
                             <button
                               onClick={() => setSelectedRecord(r)}
-                              className="p-1 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-100"
+                              className="p-1.5 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 border border-transparent hover:border-slate-200 transition-colors"
                               title="View detail drawer"
                             >
-                              <Eye className="w-3.5 h-3.5" />
+                              <Eye className="w-3.5 h-3.5" strokeWidth={1.75} />
                             </button>
                           </div>
                         )}
@@ -741,19 +741,21 @@ export const RecordDataGrid: React.FC<RecordDataGridProps> = ({
               <button
                 disabled={page <= 1}
                 onClick={() => setPage(page - 1)}
-                className="p-1 border border-slate-300 rounded bg-white hover:bg-slate-50 disabled:opacity-40"
+                className="p-1.5 border border-slate-300 rounded-md bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                title="Previous Page"
               >
-                <ChevronLeft className="w-4 h-4" />
+                <ChevronLeft className="w-3.5 h-3.5" strokeWidth={1.75} />
               </button>
-              <span className="px-2 font-medium">
+              <span className="px-2 font-medium font-mono text-[11px]">
                 {page} / {totalPages || 1}
               </span>
               <button
                 disabled={page >= totalPages}
                 onClick={() => setPage(page + 1)}
-                className="p-1 border border-slate-300 rounded bg-white hover:bg-slate-50 disabled:opacity-40"
+                className="p-1.5 border border-slate-300 rounded-md bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                title="Next Page"
               >
-                <ChevronRight className="w-4 h-4" />
+                <ChevronRight className="w-3.5 h-3.5" strokeWidth={1.75} />
               </button>
             </div>
           </div>

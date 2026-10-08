@@ -2,10 +2,11 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Car, Lock, Mail, ArrowRight, ShieldCheck, CheckCircle2 } from 'lucide-react';
+import { Lock, Mail, ArrowRight, ShieldCheck } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/authContext';
 import { Button } from '@/components/common/Button';
+import { DealerSocketLogo } from '@/components/common/DealerSocketLogo';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -45,8 +46,8 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
-        <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-blue-600 text-white shadow-md mb-3">
-          <Car className="w-7 h-7" />
+        <div className="mb-3">
+          <DealerSocketLogo size="xl" withGlow />
         </div>
         <h2 className="text-2xl font-bold tracking-tight text-slate-900">
           DealerSocket Operations Hub
@@ -70,7 +71,7 @@ export default function LoginPage() {
                 Email Address
               </label>
               <div className="relative">
-                <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+                <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" strokeWidth={1.75} />
                 <input
                   type="email"
                   required
@@ -92,7 +93,7 @@ export default function LoginPage() {
                 </span>
               </div>
               <div className="relative">
-                <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+                <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" strokeWidth={1.75} />
                 <input
                   type="password"
                   required
@@ -108,7 +109,7 @@ export default function LoginPage() {
               className="w-full mt-2"
               size="md"
               isLoading={isLoading}
-              icon={<ArrowRight className="w-4 h-4" />}
+              icon={<ArrowRight className="w-4 h-4 ml-1" strokeWidth={1.75} />}
             >
               Sign In to Platform
             </Button>
@@ -122,16 +123,16 @@ export default function LoginPage() {
             <button
               type="button"
               onClick={() => handleQuickLogin('devs@neximet.com', 'Devs@123456')}
-              className="w-full py-2 px-3 rounded-md border border-slate-200 bg-slate-50 hover:bg-slate-100 hover:border-slate-300 text-xs font-semibold text-slate-800 text-center transition-colors flex items-center justify-center gap-2"
+              className="w-full py-2 px-3 rounded-md border border-slate-200 bg-slate-50 hover:bg-slate-100 hover:border-slate-300 text-xs font-semibold text-slate-800 text-center transition-colors flex items-center justify-center gap-2 cursor-pointer"
             >
-              <span className="w-2 h-2 rounded-full bg-blue-600" />
+              <span className="w-2 h-2 rounded-full bg-blue-600 animate-pulse" />
               <span>Fill Credentials: Devs (devs@neximet.com)</span>
             </button>
           </div>
         </div>
 
         <div className="mt-6 text-center text-xs text-slate-400 flex items-center justify-center gap-1.5">
-          <ShieldCheck className="w-3.5 h-3.5" />
+          <ShieldCheck className="w-3.5 h-3.5 text-slate-500" strokeWidth={1.75} />
           <span>Automotive SOC2 &amp; Role-Scoped Data Isolation</span>
         </div>
       </div>

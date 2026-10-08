@@ -645,9 +645,10 @@ export const LivePdfViewer: React.FC<LivePdfViewerProps> = ({ report, records })
               </span>
               <button
                 onClick={() => setShowConfigDrawer(false)}
-                className="text-slate-400 hover:text-slate-600 text-xs font-bold"
+                className="p-1 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
+                title="Close template options"
               >
-                ✕
+                <X className="w-4 h-4" strokeWidth={1.75} />
               </button>
             </div>
 

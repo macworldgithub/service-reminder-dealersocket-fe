@@ -215,37 +215,37 @@ export default function SettingsPage() {
             <button
               type="button"
               onClick={() => setActiveTab('general')}
-              className={`pb-3 flex items-center gap-2 border-b-2 transition-colors shrink-0 ${
+              className={`pb-3 flex items-center gap-2 border-b-2 transition-colors shrink-0 cursor-pointer ${
                 activeTab === 'general'
                   ? 'border-blue-600 text-blue-600 font-semibold'
                   : 'border-transparent text-slate-500 hover:text-slate-800'
               }`}
             >
-              <SettingsIcon className="w-4 h-4" />
+              <Building2 className="w-4 h-4" strokeWidth={1.75} />
               <span>General & Profile</span>
             </button>
             <button
               type="button"
               onClick={() => setActiveTab('pdf')}
-              className={`pb-3 flex items-center gap-2 border-b-2 transition-colors shrink-0 ${
+              className={`pb-3 flex items-center gap-2 border-b-2 transition-colors shrink-0 cursor-pointer ${
                 activeTab === 'pdf'
                   ? 'border-blue-600 text-blue-600 font-semibold'
                   : 'border-transparent text-slate-500 hover:text-slate-800'
               }`}
             >
-              <FileText className="w-4 h-4" />
+              <FileText className="w-4 h-4" strokeWidth={1.75} />
               <span>PDF Export Preferences</span>
             </button>
             <button
               type="button"
               onClick={() => setActiveTab('integrations')}
-              className={`pb-3 flex items-center gap-2 border-b-2 transition-colors shrink-0 ${
+              className={`pb-3 flex items-center gap-2 border-b-2 transition-colors shrink-0 cursor-pointer ${
                 activeTab === 'integrations'
                   ? 'border-blue-600 text-blue-600 font-semibold'
                   : 'border-transparent text-slate-500 hover:text-slate-800'
               }`}
             >
-              <Webhook className="w-4 h-4" />
+              <Webhook className="w-4 h-4" strokeWidth={1.75} />
               <span>DMS Sync & Webhooks</span>
             </button>
           </nav>

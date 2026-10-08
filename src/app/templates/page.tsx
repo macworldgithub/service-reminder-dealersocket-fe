@@ -235,7 +235,7 @@ export default function TemplatesPage() {
       title="Communication &amp; PDF Templates"
       subtitle="Manage document layouts, customer SMS reminders, emails, and VA tasks"
       actions={
-        <Button onClick={handleOpenCreateModal} icon={<Plus className="w-4 h-4" />}>
+        <Button onClick={handleOpenCreateModal} icon={<Plus className="w-4 h-4" strokeWidth={2} />}>
           Create Template
         </Button>
       }
@@ -244,15 +244,15 @@ export default function TemplatesPage() {
         {/* Type Filter Buttons */}
         <div className="flex items-center gap-2 border-b border-slate-200 pb-3">
           {[
-            { id: 'ALL', label: 'All Communication Templates', icon: <FileText className="w-3.5 h-3.5" /> },
-            { id: 'SMS', label: 'SMS Messages', icon: <MessageSquare className="w-3.5 h-3.5" /> },
-            { id: 'EMAIL', label: 'Email Reminders', icon: <Mail className="w-3.5 h-3.5" /> },
-            { id: 'VA_TASK', label: 'VA Tasks', icon: <CheckSquare className="w-3.5 h-3.5" /> },
+            { id: 'ALL', label: 'All Communication Templates', icon: <Sparkles className="w-3.5 h-3.5" strokeWidth={1.75} /> },
+            { id: 'SMS', label: 'SMS Messages', icon: <MessageSquare className="w-3.5 h-3.5" strokeWidth={1.75} /> },
+            { id: 'EMAIL', label: 'Email Reminders', icon: <Mail className="w-3.5 h-3.5" strokeWidth={1.75} /> },
+            { id: 'VA_TASK', label: 'VA Tasks', icon: <CheckSquare className="w-3.5 h-3.5" strokeWidth={1.75} /> },
           ].map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveType(tab.id as any)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors cursor-pointer ${
                 activeType === tab.id
                   ? 'bg-blue-600 text-white shadow-xs'
                   : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'

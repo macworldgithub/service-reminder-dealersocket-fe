@@ -59,9 +59,10 @@ export const Modal: React.FC<ModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="p-1 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+            className="p-1 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
+            title="Close modal"
           >
-            <X className="w-4 h-4" />
+            <X className="w-4 h-4" strokeWidth={1.75} />
           </button>
         </div>
         <div className="p-5 overflow-y-auto flex-1">{children}</div>

@@ -90,9 +90,9 @@ export const RecordDrawer: React.FC<RecordDrawerProps> = ({
         </div>
         <button
           onClick={onClose}
-          className="p-1.5 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 transition-colors"
+          className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 transition-colors cursor-pointer"
         >
-          <X className="w-4 h-4" />
+          <X className="w-4 h-4" strokeWidth={1.75} />
         </button>
       </div>
 
@@ -100,7 +100,7 @@ export const RecordDrawer: React.FC<RecordDrawerProps> = ({
       <div className="flex border-b border-slate-200 px-5 bg-white text-xs font-medium">
         <button
           onClick={() => setActiveTab('details')}
-          className={`py-2.5 px-3 border-b-2 transition-colors ${
+          className={`py-2.5 px-3 border-b-2 transition-colors cursor-pointer ${
             activeTab === 'details'
               ? 'border-blue-600 text-blue-600 font-semibold'
               : 'border-transparent text-slate-500 hover:text-slate-800'
@@ -110,7 +110,7 @@ export const RecordDrawer: React.FC<RecordDrawerProps> = ({
         </button>
         <button
           onClick={() => setActiveTab('comparison')}
-          className={`py-2.5 px-3 border-b-2 transition-colors ${
+          className={`py-2.5 px-3 border-b-2 transition-colors cursor-pointer ${
             activeTab === 'comparison'
               ? 'border-blue-600 text-blue-600 font-semibold'
               : 'border-transparent text-slate-500 hover:text-slate-800'
@@ -128,7 +128,7 @@ export const RecordDrawer: React.FC<RecordDrawerProps> = ({
             {record.validationNotes && record.validationNotes.length > 0 && (
               <div className="p-3 bg-amber-50 border border-amber-200 rounded-md text-xs text-amber-800 space-y-1">
                 <div className="font-semibold flex items-center gap-1.5">
-                  <AlertCircle className="w-3.5 h-3.5" /> Validation Notice:
+                  <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" strokeWidth={1.75} /> Validation Notice:
                 </div>
                 {record.validationNotes.map((note, i) => (
                   <div key={i} className="pl-5">• {note}</div>

@@ -207,8 +207,8 @@ export const BatchUploadModal: React.FC<BatchUploadModalProps> = ({
                 onChange={(e) => handleFileSelect(e.target.files)}
                 className="hidden"
               />
-              <div className="w-12 h-12 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mx-auto mb-2">
-                <UploadCloud className="w-6 h-6" />
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-b from-blue-50 to-blue-100 border border-blue-200/80 text-blue-600 flex items-center justify-center mx-auto mb-2.5 shadow-2xs">
+                <UploadCloud className="w-6 h-6" strokeWidth={1.75} />
               </div>
               <h3 className="text-sm font-bold text-slate-800">
                 Drop multiple PDF files here, or browse
@@ -230,7 +230,7 @@ export const BatchUploadModal: React.FC<BatchUploadModalProps> = ({
                   </span>
                   <button
                     onClick={() => setFilesQueue([])}
-                    className="text-rose-600 hover:underline text-[11px]"
+                    className="text-rose-600 hover:underline text-[11px] cursor-pointer"
                   >
                     Clear All
                   </button>
@@ -249,15 +249,15 @@ export const BatchUploadModal: React.FC<BatchUploadModalProps> = ({
                             #{idx + 1}
                           </span>
                           {isPdf ? (
-                            <FileText className="w-4 h-4 text-rose-500 shrink-0" />
+                            <FileText className="w-4 h-4 text-rose-500 shrink-0" strokeWidth={1.75} />
                           ) : (
-                            <FileSpreadsheet className="w-4 h-4 text-emerald-600 shrink-0" />
+                            <FileSpreadsheet className="w-4 h-4 text-emerald-600 shrink-0" strokeWidth={1.75} />
                           )}
                           <div className="truncate">
                             <span className="font-medium text-slate-800 block truncate">
                               {item.file.name}
                             </span>
-                            <span className="text-[10px] text-slate-400">
+                            <span className="text-[10px] text-slate-400 font-mono">
                               {formatFileSize(item.file.size)}
                             </span>
                           </div>
@@ -266,10 +266,10 @@ export const BatchUploadModal: React.FC<BatchUploadModalProps> = ({
                         <button
                           onClick={() => handleRemoveFile(item.id)}
                           disabled={isProcessing}
-                          className="p-1 text-slate-400 hover:text-rose-600 rounded"
+                          className="p-1 text-slate-400 hover:text-rose-600 rounded transition-colors cursor-pointer"
                           title="Remove from batch"
                         >
-                          <X className="w-3.5 h-3.5" />
+                          <X className="w-3.5 h-3.5" strokeWidth={2} />
                         </button>
                       </div>
                     );

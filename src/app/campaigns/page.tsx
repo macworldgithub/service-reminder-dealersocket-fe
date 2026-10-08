@@ -716,10 +716,14 @@ export default function CampaignsPage() {
         {/* ARCHITECTURE FLOW EXPLANATION BANNER                                      */}
         {/* ========================================================================= */}
         <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-xs">
-          <div className="flex items-center gap-2 mb-2">
-            <Sparkles className="w-4 h-4 text-blue-600" />
-            <h2 className="text-sm font-semibold text-slate-900">
-              DealerSocket Report Ingestion → Automation Pipeline
+          <div className="flex items-center gap-2.5 mb-2">
+            <div className="w-6 h-6 rounded-md bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600">
+              <Sparkles className="w-3.5 h-3.5" strokeWidth={1.75} />
+            </div>
+            <h2 className="text-sm font-semibold text-slate-900 flex items-center gap-1.5">
+              <span>DealerSocket Report Ingestion</span>
+              <ArrowRight className="w-3.5 h-3.5 text-blue-500 inline shrink-0" strokeWidth={2} />
+              <span>Automation Pipeline</span>
             </h2>
           </div>
           <p className="text-xs text-slate-500 mb-4">
@@ -859,9 +863,10 @@ export default function CampaignsPage() {
                     </span>
                     <button
                       onClick={() => openConfigureModal(c)}
-                      className="text-[11px] text-indigo-600 hover:underline font-medium"
+                      className="text-[11px] text-indigo-600 hover:text-indigo-800 font-medium inline-flex items-center gap-1 cursor-pointer"
                     >
-                      Edit Timeline Steps →
+                      <span>Edit Timeline Steps</span>
+                      <ArrowRight className="w-3 h-3" strokeWidth={2} />
                     </button>
                   </div>
 

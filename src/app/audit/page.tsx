@@ -48,11 +48,12 @@ export default function AuditTrailPage() {
         {/* Filter bar */}
         <div className="bg-white p-3.5 rounded-lg border border-slate-200 shadow-xs flex items-center justify-between">
           <div className="flex items-center gap-2">
+            <Filter className="w-3.5 h-3.5 text-blue-600 shrink-0" strokeWidth={1.75} />
             <span className="text-xs font-semibold text-slate-700">Filter Event Action:</span>
             <select
               value={actionFilter}
               onChange={(e) => setActionFilter(e.target.value)}
-              className="text-xs px-2.5 py-1.5 border border-slate-300 rounded bg-white"
+              className="text-xs px-2.5 py-1.5 border border-slate-300 rounded-md bg-white font-medium"
             >
               <option value="">All Audit Actions</option>
               <option value="REPORT_UPLOADED">REPORT_UPLOADED</option>
@@ -76,7 +77,10 @@ export default function AuditTrailPage() {
             {isLoading ? (
               <div className="py-12 text-center text-xs text-slate-400">Loading audit log...</div>
             ) : logs.length === 0 ? (
-              <div className="py-12 text-center text-xs text-slate-400">No audit events found.</div>
+              <div className="py-12 text-center text-xs text-slate-400">
+                <ShieldCheck className="w-8 h-8 text-slate-300 mx-auto mb-2" strokeWidth={1.5} />
+                <span>No audit events found matching filter.</span>
+              </div>
             ) : (
               logs.map((log) => (
                 <div key={log._id} className="p-4 hover:bg-slate-50/70 transition-colors text-xs space-y-2">
@@ -88,14 +92,17 @@ export default function AuditTrailPage() {
                       </Badge>
                       <span className="font-semibold text-slate-800">{log.entityType}</span>
                     </div>
-                    <span className="text-[11px] text-slate-400 font-mono">
-                      {formatDate(log.createdAt)}
+                    <span className="text-[11px] text-slate-400 font-mono flex items-center gap-1">
+                      <Clock className="w-3 h-3 text-slate-400 shrink-0" strokeWidth={1.75} />
+                      <span>{formatDate(log.createdAt)}</span>
                     </span>
                   </div>
 
                   <div className="flex items-center justify-between text-[11px] text-slate-500">
-                    <div>
-                      Operator: <strong className="text-slate-700">
+                    <div className="flex items-center gap-1">
+                      <User className="w-3 h-3 text-slate-400 shrink-0" strokeWidth={1.75} />
+                      <span>Operator:</span>
+                      <strong className="text-slate-700">
                         {typeof log.userId === 'object' ? (log.userId as any)?.name : 'System Operator'}
                       </strong>
                     </div>

@@ -309,35 +309,35 @@ export default function ReportsPage() {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div className="bg-white p-3 rounded-lg border border-slate-200 shadow-2xs flex items-center justify-between">
             <div>
-              <span className="text-[11px] font-medium text-slate-500 uppercase">Filtered Reports</span>
+              <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Filtered Reports</span>
               <div className="text-lg font-bold text-slate-900 mt-0.5">{reports.length} Reports</div>
             </div>
-            <div className="w-8 h-8 rounded-md bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
-              {reports.length}
+            <div className="w-8 h-8 rounded-lg bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center font-bold text-xs shadow-2xs">
+              <FileSpreadsheet className="w-4 h-4" strokeWidth={1.75} />
             </div>
           </div>
 
           <div className="bg-white p-3 rounded-lg border border-emerald-200 bg-emerald-50/20 shadow-2xs flex items-center justify-between">
             <div>
-              <span className="text-[11px] font-semibold text-emerald-800 uppercase">Total Tracked Revenue</span>
+              <span className="text-[11px] font-semibold text-emerald-800 uppercase tracking-wider">Total Tracked Revenue</span>
               <div className="text-lg font-black text-emerald-700 font-mono mt-0.5">
                 {formatCurrency(totalTrackedRevenue)}
               </div>
             </div>
-            <div className="w-8 h-8 rounded-md bg-emerald-100 text-emerald-700 flex items-center justify-center">
-              <DollarSign className="w-4 h-4" />
+            <div className="w-8 h-8 rounded-lg bg-emerald-100/80 border border-emerald-200 text-emerald-700 flex items-center justify-center shadow-2xs">
+              <DollarSign className="w-4 h-4" strokeWidth={1.75} />
             </div>
           </div>
 
           <div className="bg-white p-3 rounded-lg border border-slate-200 shadow-2xs flex items-center justify-between">
             <div>
-              <span className="text-[11px] font-medium text-slate-500 uppercase">Total Repair Order Rows</span>
+              <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Total Repair Order Rows</span>
               <div className="text-lg font-bold text-slate-900 mt-0.5">
                 {reports.reduce((acc, r) => acc + (r.recordCount || 0), 0).toLocaleString()} Records
               </div>
             </div>
-            <div className="w-8 h-8 rounded-md bg-slate-100 text-slate-700 flex items-center justify-center">
-              <Layers className="w-4 h-4" />
+            <div className="w-8 h-8 rounded-lg bg-slate-100 border border-slate-200 text-slate-700 flex items-center justify-center shadow-2xs">
+              <Layers className="w-4 h-4" strokeWidth={1.75} />
             </div>
           </div>
         </div>
@@ -368,13 +368,13 @@ export default function ReportsPage() {
                 ) : reports.length === 0 ? (
                   <tr>
                     <td colSpan={8} className="py-12 text-center">
-                      <FileSpreadsheet className="w-10 h-10 text-slate-300 mx-auto mb-2" />
+                      <FileSpreadsheet className="w-10 h-10 text-slate-300 mx-auto mb-2" strokeWidth={1.5} />
                       <div className="text-sm font-medium text-slate-700">No reports found</div>
                       <p className="text-xs text-slate-400 mt-0.5">
                         Upload single reports or use Batch Upload to process multiple PDFs together
                       </p>
                       <div className="mt-3 flex items-center justify-center gap-2">
-                        <Button size="sm" onClick={() => setIsBatchModalOpen(true)} icon={<Layers className="w-3.5 h-3.5" />}>
+                        <Button size="sm" onClick={() => setIsBatchModalOpen(true)} icon={<Layers className="w-3.5 h-3.5" strokeWidth={1.75} />}>
                           Batch Upload PDFs
                         </Button>
                         <Link href="/imports/new">
@@ -415,7 +415,7 @@ export default function ReportsPage() {
                         <td className="py-3 px-4">
                           {hasPeriod ? (
                             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200 shadow-2xs">
-                              <Calendar className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                              <Calendar className="w-3.5 h-3.5 text-blue-600 shrink-0" strokeWidth={1.75} />
                               {`${formatDate(r.reportDateFrom)} – ${formatDate(r.reportDateTo)}`}
                             </span>
                           ) : (
@@ -447,7 +447,7 @@ export default function ReportsPage() {
 
                         <td className="py-3 px-4 text-slate-500">
                           <div className="flex items-center gap-1 text-[11px]">
-                            <Clock className="w-3 h-3 text-slate-400 shrink-0" />
+                            <Clock className="w-3 h-3 text-slate-400 shrink-0" strokeWidth={1.75} />
                             <span>{formatDate(r.createdAt)}</span>
                           </div>
                         </td>
@@ -462,14 +462,14 @@ export default function ReportsPage() {
                           <div className="flex items-center justify-end gap-1.5">
                             <Link href={`/reports/${r._id}`}>
                               <Button variant="outline" size="sm" className="h-7 px-2">
-                                <Eye className="w-3.5 h-3.5 mr-1" /> View
+                                <Eye className="w-3.5 h-3.5 mr-1" strokeWidth={1.75} /> View
                               </Button>
                             </Link>
 
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="h-7 px-2 text-slate-600"
+                              className="h-7 px-2 text-slate-600 hover:text-blue-600 hover:bg-blue-50"
                               title="Export PDF"
                               onClick={() => {
                                 downloadAuthenticatedFile({
@@ -479,7 +479,7 @@ export default function ReportsPage() {
                                 }).catch((err) => alert('Failed to export PDF: ' + err.message));
                               }}
                             >
-                              <Download className="w-3.5 h-3.5" />
+                              <Download className="w-3.5 h-3.5" strokeWidth={1.75} />
                             </Button>
 
                             <button
@@ -488,26 +488,26 @@ export default function ReportsPage() {
                                 setEditName(r.name);
                                 setEditCampaign(r.campaignName || '');
                               }}
-                              className="p-1 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-100"
+                              className="p-1.5 rounded-md text-slate-400 hover:text-blue-600 hover:bg-blue-50 border border-transparent hover:border-blue-100 transition-colors"
                               title="Edit metadata"
                             >
-                              <Edit2 className="w-3.5 h-3.5" />
+                              <Edit2 className="w-3.5 h-3.5" strokeWidth={1.75} />
                             </button>
 
                             <button
                               onClick={() => handleDuplicate(r._id)}
-                              className="p-1 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-100"
+                              className="p-1.5 rounded-md text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 border border-transparent hover:border-indigo-100 transition-colors"
                               title="Duplicate as new version"
                             >
-                              <Copy className="w-3.5 h-3.5" />
+                              <Copy className="w-3.5 h-3.5" strokeWidth={1.75} />
                             </button>
 
                             <button
                               onClick={() => setDeletingReport(r)}
-                              className="p-1 rounded text-slate-400 hover:text-rose-600 hover:bg-rose-50"
+                              className="p-1.5 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 border border-transparent hover:border-rose-100 transition-colors"
                               title="Delete report"
                             >
-                              <Trash2 className="w-3.5 h-3.5" />
+                              <Trash2 className="w-3.5 h-3.5" strokeWidth={1.75} />
                             </button>
                           </div>
                         </td>

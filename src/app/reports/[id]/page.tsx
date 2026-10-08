@@ -232,19 +232,19 @@ export default function ReportDetailPage() {
 
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500 mt-2">
               <span className="flex items-center gap-1 font-medium text-slate-700">
-                <Building2 className="w-3.5 h-3.5 text-blue-600" />
+                <Building2 className="w-3.5 h-3.5 text-blue-600" strokeWidth={1.75} />
                 {dealershipName}
               </span>
               <span>·</span>
               <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
-                <Calendar className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                <Calendar className="w-3.5 h-3.5 text-blue-600 shrink-0" strokeWidth={1.75} />
                 {report.reportDateFrom && report.reportDateTo
                   ? `${formatDate(report.reportDateFrom)} – ${formatDate(report.reportDateTo)}`
                   : 'Date Unspecified'}
               </span>
               <span>·</span>
               <span className="flex items-center gap-1 text-slate-500">
-                <Clock className="w-3.5 h-3.5 text-slate-400" />
+                <Clock className="w-3.5 h-3.5 text-slate-400" strokeWidth={1.75} />
                 Uploaded {formatDate(report.createdAt)}
               </span>
               <span>·</span>
@@ -260,7 +260,7 @@ export default function ReportDetailPage() {
               size="sm"
               isLoading={isExportingPdf}
               onClick={handleExportPdf}
-              icon={<Download className="w-3.5 h-3.5" />}
+              icon={<Download className="w-3.5 h-3.5" strokeWidth={1.75} />}
             >
               Export PDF
             </Button>
@@ -269,7 +269,7 @@ export default function ReportDetailPage() {
               size="sm"
               isLoading={isExportingExcel}
               onClick={handleExportExcel}
-              icon={<FileSpreadsheet className="w-3.5 h-3.5" />}
+              icon={<FileSpreadsheet className="w-3.5 h-3.5" strokeWidth={1.75} />}
             >
               Export Excel
             </Button>

@@ -75,7 +75,7 @@ export default function UsersPage() {
       title="User Management"
       subtitle="Role-based access control and operator assignments"
       actions={
-        <Button onClick={() => setIsModalOpen(true)} icon={<UserPlus className="w-4 h-4" />}>
+        <Button onClick={() => setIsModalOpen(true)} icon={<UserPlus className="w-4 h-4" strokeWidth={1.75} />}>
           Invite User
         </Button>
       }
@@ -97,23 +97,23 @@ export default function UsersPage() {
               {users.map((u) => (
                 <tr key={u.id || (u as any)._id} className="hover:bg-slate-50/70">
                   <td className="py-3 px-4 font-semibold text-slate-900">{u.name}</td>
-                  <td className="py-3 px-4 text-slate-600">{u.email}</td>
+                  <td className="py-3 px-4 text-slate-600 font-mono text-[11px]">{u.email}</td>
                   <td className="py-3 px-4">
                     <Badge variant={u.role === 'ADMIN' ? 'default' : u.role === 'MANAGER' ? 'success' : 'neutral'}>
                       {u.role}
                     </Badge>
                   </td>
                   <td className="py-3 px-4">
-                    <span className="inline-flex items-center gap-1 text-emerald-600 font-medium">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> Active
+                    <span className="inline-flex items-center gap-1.5 text-emerald-600 font-medium">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> Active
                     </span>
                   </td>
                   <td className="py-3 px-4 text-slate-400">
                     {u.lastLoginAt ? formatDate(u.lastLoginAt) : 'Never'}
                   </td>
                   <td className="py-3 px-4 text-right">
-                    <Button variant="outline" size="sm" className="h-7 text-xs">
-                      Edit
+                    <Button variant="outline" size="sm" className="h-7 text-xs px-2.5">
+                      <Edit2 className="w-3 h-3 mr-1 text-slate-500" strokeWidth={1.75} /> Edit
                     </Button>
                   </td>
                 </tr>

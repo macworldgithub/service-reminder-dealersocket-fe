@@ -18,6 +18,8 @@ import {
   Info,
   Download,
   Layers,
+  Check,
+  X,
 } from 'lucide-react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Button } from '@/components/common/Button';
@@ -196,7 +198,7 @@ export default function NewImportPage() {
                       : 'bg-slate-200 text-slate-600'
                   }`}
                 >
-                  {currentStep > step.num ? '✓' : step.num}
+                  {currentStep > step.num ? <Check className="w-3 h-3 stroke-[2.5]" /> : step.num}
                 </span>
                 <span>{step.label}</span>
               </div>
@@ -207,8 +209,12 @@ export default function NewImportPage() {
         {errorMessage && (
           <div className="mb-6 p-4 rounded-lg bg-rose-50 border border-rose-200 text-sm text-rose-700 font-medium flex items-center justify-between">
             <span>{errorMessage}</span>
-            <button onClick={() => setErrorMessage('')} className="text-rose-500 hover:text-rose-700 font-bold">
-              ×
+            <button
+              onClick={() => setErrorMessage('')}
+              className="p-1 rounded-md text-rose-500 hover:text-rose-700 hover:bg-rose-100 transition-colors cursor-pointer"
+              title="Dismiss error"
+            >
+              <X className="w-4 h-4" strokeWidth={2} />
             </button>
           </div>
         )}

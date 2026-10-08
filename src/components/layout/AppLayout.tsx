@@ -6,6 +6,7 @@ import { Sidebar } from './Sidebar';
 import { Header } from './Header';
 import { useAuth } from '@/lib/authContext';
 import { Loader2, X } from 'lucide-react';
+import { DealerSocketLogo } from '@/components/common/DealerSocketLogo';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -41,9 +42,14 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <div className="flex flex-col items-center gap-3">
-          <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
-          <span className="text-xs font-medium text-slate-500">Loading DealerSocket Hub...</span>
+        <div className="flex flex-col items-center gap-3.5">
+          <div className="relative">
+            <DealerSocketLogo size="lg" withGlow />
+            <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-0.5 shadow-xs">
+              <Loader2 className="w-4 h-4 text-blue-600 animate-spin" strokeWidth={2.5} />
+            </div>
+          </div>
+          <span className="text-xs font-semibold text-slate-600 tracking-wide">Loading DealerSocket Hub...</span>
         </div>
       </div>
     );
@@ -71,11 +77,11 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
             <div className="absolute top-3.5 right-3.5 z-20">
               <button
                 type="button"
-                className="p-1.5 rounded-md text-slate-400 hover:text-white hover:bg-slate-800"
+                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
                 onClick={() => setMobileMenuOpen(false)}
                 aria-label="Close menu"
               >
-                <X className="w-5 h-5" />
+                <X className="w-5 h-5" strokeWidth={1.75} />
               </button>
             </div>
             <Sidebar isMobile onClose={() => setMobileMenuOpen(false)} />
