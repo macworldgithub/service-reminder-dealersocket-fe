@@ -87,6 +87,12 @@ export default function SettingsPage() {
   };
 
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setWebhookUrl(`${window.location.origin}/api/webhooks/ingest`);
+    }
+  }, []);
+
+  useEffect(() => {
     if (activeTab === 'integrations') {
       fetchWebhookLogs();
     }
@@ -695,13 +701,13 @@ export default function SettingsPage() {
                 <div className="relative">
                   <pre className="text-xs font-mono text-emerald-400 bg-slate-950/70 p-3.5 rounded-lg overflow-x-auto leading-relaxed border border-slate-800/80">
                     {codeSnippetTab === 'curl' &&
-`curl -X POST http://localhost:7000/api/webhooks/ingest \\
+`curl -X POST ${webhookUrl} \\
   -H "x-api-key: ${apiKey}" \\
   -F "file=@HY_Closed_RO.pdf"`}
                     {codeSnippetTab === 'python' &&
 `import requests
 
-url = "http://localhost:7000/api/webhooks/ingest"
+url = "${webhookUrl}"
 headers = {"x-api-key": "${apiKey}"}
 
 with open("HY_Closed_RO.pdf", "rb") as f:
@@ -714,7 +720,7 @@ const FormData = require('form-data');
 const form = new FormData();
 form.append('file', fs.createReadStream('HY_Closed_RO.pdf'));
 
-fetch('http://localhost:7000/api/webhooks/ingest', {
+fetch('${webhookUrl}', {
   method: 'POST',
   headers: {
     'x-api-key': '${apiKey}',
@@ -728,10 +734,10 @@ fetch('http://localhost:7000/api/webhooks/ingest', {
                     onClick={() => {
                       const snippet =
                         codeSnippetTab === 'curl'
-                          ? `curl -X POST http://localhost:7000/api/webhooks/ingest \\\n  -H "x-api-key: ${apiKey}" \\\n  -F "file=@HY_Closed_RO.pdf"`
+                          ? `curl -X POST ${webhookUrl} \\\n  -H "x-api-key: ${apiKey}" \\\n  -F "file=@HY_Closed_RO.pdf"`
                           : codeSnippetTab === 'python'
-                          ? `import requests\n\nurl = "http://localhost:7000/api/webhooks/ingest"\nheaders = {"x-api-key": "${apiKey}"}\nwith open("HY_Closed_RO.pdf", "rb") as f:\n    response = requests.post(url, headers=headers, files={"file": f})\n    print(response.json())`
-                          : `const fs = require('fs');\nconst FormData = require('form-data');\nconst form = new FormData();\nform.append('file', fs.createReadStream('HY_Closed_RO.pdf'));\nfetch('http://localhost:7000/api/webhooks/ingest', { method: 'POST', headers: { 'x-api-key': '${apiKey}', ...form.getHeaders() }, body: form }).then(r => r.json()).then(console.log);`;
+                          ? `import requests\n\nurl = "${webhookUrl}"\nheaders = {"x-api-key": "${apiKey}"}\nwith open("HY_Closed_RO.pdf", "rb") as f:\n    response = requests.post(url, headers=headers, files={"file": f})\n    print(response.json())`
+                          : `const fs = require('fs');\nconst FormData = require('form-data');\nconst form = new FormData();\nform.append('file', fs.createReadStream('HY_Closed_RO.pdf'));\nfetch('${webhookUrl}', { method: 'POST', headers: { 'x-api-key': '${apiKey}', ...form.getHeaders() }, body: form }).then(r => r.json()).then(console.log);`;
                       copyCodeSnippet(snippet);
                     }}
                     className="absolute top-2.5 right-2.5 px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 text-[10px] rounded flex items-center gap-1 transition"
