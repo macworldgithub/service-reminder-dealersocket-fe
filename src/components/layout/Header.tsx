@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Building2, Bell, Menu, ChevronRight } from 'lucide-react';
+import { Building2, Menu, ChevronRight } from 'lucide-react';
 import { useAuth } from '@/lib/authContext';
 
 interface HeaderProps {
@@ -73,14 +73,6 @@ export const Header: React.FC<HeaderProps> = ({
             </span>
           )}
         </div>
-        <button
-          type="button"
-          className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors relative hidden sm:flex items-center justify-center"
-          title="System Online"
-        >
-          <Bell className="w-4 h-4" strokeWidth={1.75} />
-          <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-emerald-500 rounded-full ring-2 ring-white" />
-        </button>
       </div>
     </header>
   );

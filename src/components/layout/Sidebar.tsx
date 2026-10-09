@@ -48,9 +48,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ isMobile, onClose }) => {
               <span>Service</span>
               <span className="text-blue-400">Pulse</span>
             </div>
-            <div className="text-[10px] text-slate-400 font-semibold tracking-wider uppercase mt-1 flex items-center gap-1.5">
-              <span>Campaign Intelligence</span>
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block animate-pulse" />
+            <div className="text-[10px] text-slate-400 font-semibold tracking-wider uppercase mt-1">
+              Campaign Intelligence
             </div>
           </div>
         </Link>
