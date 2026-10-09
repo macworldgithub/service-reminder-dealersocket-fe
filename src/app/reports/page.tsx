@@ -20,6 +20,7 @@ import {
   Sparkles,
   DollarSign,
   TrendingUp,
+  AlertTriangle,
 } from 'lucide-react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Button } from '@/components/common/Button';
@@ -126,6 +127,12 @@ export default function ReportsPage() {
   const [deletingReport, setDeletingReport] = useState<Report | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  // Delete all reports modal
+  const [isDeleteAllModalOpen, setIsDeleteAllModalOpen] = useState(false);
+  const [isDeletingAll, setIsDeletingAll] = useState(false);
+  const [deleteAllScope, setDeleteAllScope] = useState<'current' | 'all'>('current');
+  const [deleteAllConfirmText, setDeleteAllConfirmText] = useState('');
+
   const fetchReports = async () => {
     setIsLoading(true);
     try {
@@ -181,6 +188,25 @@ export default function ReportsPage() {
       console.error('Delete failed', err);
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  const handleDeleteAllReports = async () => {
+    setIsDeletingAll(true);
+    try {
+      const params = new URLSearchParams();
+      if (deleteAllScope === 'current' && activeDealership?._id) {
+        params.append('dealershipId', activeDealership._id);
+      }
+      await api.delete(`/reports/all?${params.toString()}`);
+      setIsDeleteAllModalOpen(false);
+      setDeleteAllConfirmText('');
+      await fetchReports();
+    } catch (err: any) {
+      console.error('Delete all failed', err);
+      alert(err.response?.data?.message || 'Failed to delete all reports');
+    } finally {
+      setIsDeletingAll(false);
     }
   };
 
@@ -264,6 +290,21 @@ export default function ReportsPage() {
       subtitle="Ingested DealerSocket reports and service RO batches distinguished by coverage period"
       actions={
         <div className="flex items-center gap-2">
+          {reports.length > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setDeleteAllScope('current');
+                setDeleteAllConfirmText('');
+                setIsDeleteAllModalOpen(true);
+              }}
+              icon={<Trash2 className="w-3.5 h-3.5 text-rose-600" strokeWidth={1.75} />}
+              className="text-rose-600 hover:text-rose-700 hover:bg-rose-50 border-rose-200 hover:border-rose-300 font-medium shadow-2xs"
+            >
+              Delete All Reports
+            </Button>
+          )}
           <Button
             variant="outline"
             size="sm"
@@ -747,6 +788,112 @@ export default function ReportsPage() {
               isLoading={isDeleting}
             >
               Confirm Delete
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Delete All Reports Confirmation Modal */}
+      <Modal
+        isOpen={isDeleteAllModalOpen}
+        onClose={() => {
+          if (!isDeletingAll) {
+            setIsDeleteAllModalOpen(false);
+            setDeleteAllConfirmText('');
+          }
+        }}
+        title="Delete All Reports"
+      >
+        <div className="space-y-4 text-xs">
+          <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200/90 text-rose-800 flex items-start gap-3">
+            <div className="w-7 h-7 rounded-lg bg-rose-100 border border-rose-200 flex items-center justify-center shrink-0 text-rose-600 mt-0.5">
+              <AlertTriangle className="w-4 h-4" strokeWidth={2} />
+            </div>
+            <div className="space-y-1">
+              <div className="font-bold text-xs text-rose-900">Irreversible Action</div>
+              <p className="text-[11px] text-rose-700 leading-relaxed">
+                This action will permanently delete reports and completely remove all associated closed Repair Order (RO) records, validation logs, and coverage metrics from the database.
+              </p>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider">
+              Select Deletion Scope
+            </label>
+            <div className="space-y-1.5">
+              <label className="flex items-start gap-2.5 p-2.5 rounded-lg border border-slate-200 hover:bg-slate-50 cursor-pointer transition">
+                <input
+                  type="radio"
+                  name="deleteScope"
+                  checked={deleteAllScope === 'current'}
+                  onChange={() => setDeleteAllScope('current')}
+                  className="mt-0.5 text-rose-600 focus:ring-rose-500"
+                />
+                <div>
+                  <div className="font-semibold text-slate-900">
+                    Current Store: {activeDealership?.name || 'Active Dealership'}
+                  </div>
+                  <div className="text-[11px] text-slate-500">
+                    Delete all reports belonging to this active store ({reports.length} reports currently visible).
+                  </div>
+                </div>
+              </label>
+
+              <label className="flex items-start gap-2.5 p-2.5 rounded-lg border border-slate-200 hover:bg-slate-50 cursor-pointer transition">
+                <input
+                  type="radio"
+                  name="deleteScope"
+                  checked={deleteAllScope === 'all'}
+                  onChange={() => setDeleteAllScope('all')}
+                  className="mt-0.5 text-rose-600 focus:ring-rose-500"
+                />
+                <div>
+                  <div className="font-semibold text-rose-900">
+                    All Dealerships (Global Clean Slate)
+                  </div>
+                  <div className="text-[11px] text-slate-500">
+                    Delete every single report across all stores in the platform.
+                  </div>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 mb-1">
+              Type <strong className="text-rose-600 font-mono">DELETE</strong> to confirm:
+            </label>
+            <input
+              type="text"
+              placeholder="Type DELETE"
+              value={deleteAllConfirmText}
+              onChange={(e) => setDeleteAllConfirmText(e.target.value)}
+              className="w-full text-xs px-3 py-2 border border-slate-300 rounded-md bg-white font-mono focus:outline-none focus:ring-1 focus:ring-rose-500"
+            />
+          </div>
+
+          <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={isDeletingAll}
+              onClick={() => {
+                setIsDeleteAllModalOpen(false);
+                setDeleteAllConfirmText('');
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="danger"
+              size="sm"
+              disabled={deleteAllConfirmText !== 'DELETE'}
+              onClick={handleDeleteAllReports}
+              isLoading={isDeletingAll}
+              icon={<Trash2 className="w-3.5 h-3.5 mr-1" strokeWidth={1.75} />}
+            >
+              Confirm Delete All
             </Button>
           </div>
         </div>
