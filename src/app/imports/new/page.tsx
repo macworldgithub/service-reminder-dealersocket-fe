@@ -112,8 +112,13 @@ export default function NewImportPage() {
     setErrorMessage('');
 
     try {
+      const previewRowsPayload =
+        analysisData.sampleRows && analysisData.sampleRows.length > 0
+          ? analysisData.sampleRows
+          : (analysisData.allRows || []).slice(0, 100);
+
       const res = await api.post(`/imports/${analysisData.importId}/preview`, {
-        rawRows: analysisData.allRows,
+        rawRows: previewRowsPayload,
         mappings,
         limit: 50,
       });
