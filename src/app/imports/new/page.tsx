@@ -188,7 +188,7 @@ export default function NewImportPage() {
                 key={step.num}
                 className={`py-2 px-3 rounded-md font-medium border flex items-center justify-center gap-2 transition-colors ${
                   currentStep === step.num
-                    ? 'bg-blue-50 border-blue-300 text-blue-700'
+                    ? 'bg-slate-100 border-slate-300 text-slate-900 font-semibold'
                     : currentStep > step.num
                     ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
                     : 'bg-slate-50 border-slate-200 text-slate-400'
@@ -197,7 +197,7 @@ export default function NewImportPage() {
                 <span
                   className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
                     currentStep === step.num
-                      ? 'bg-blue-600 text-white'
+                      ? 'bg-slate-900 text-white'
                       : currentStep > step.num
                       ? 'bg-emerald-600 text-white'
                       : 'bg-slate-200 text-slate-600'
@@ -228,14 +228,14 @@ export default function NewImportPage() {
         {currentStep === 1 && (
           <div className="bg-white p-8 rounded-lg border border-slate-200 shadow-xs space-y-6">
             {/* Multi-PDF Batch Ingestion Banner */}
-            <div className="p-4 bg-blue-50/70 border border-blue-200 rounded-lg flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="p-4 bg-slate-50 border border-slate-200/90 rounded-xl flex flex-col sm:flex-row items-center justify-between gap-3">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-md bg-blue-600 text-white flex items-center justify-center shrink-0">
+                <div className="w-9 h-9 rounded-lg bg-slate-900 text-white flex items-center justify-center shrink-0">
                   <Layers className="w-5 h-5" />
                 </div>
                 <div>
-                  <h4 className="text-xs font-bold text-blue-900">Have multiple PDF reports?</h4>
-                  <p className="text-[11px] text-blue-700">
+                  <h4 className="text-xs font-bold text-slate-900">Have multiple PDF reports?</h4>
+                  <p className="text-[11px] text-slate-600">
                     Process multiple PDF files together in a single batch with automatic date detection and naming.
                   </p>
                 </div>
@@ -244,8 +244,8 @@ export default function NewImportPage() {
                 size="sm"
                 variant="outline"
                 onClick={() => setIsBatchModalOpen(true)}
-                icon={<Layers className="w-3.5 h-3.5 text-blue-600" />}
-                className="bg-white hover:bg-blue-50 text-blue-700 border-blue-300 shrink-0"
+                icon={<Layers className="w-3.5 h-3.5 text-slate-700" />}
+                className="bg-white hover:bg-slate-50 text-slate-700 border-slate-300 shrink-0"
               >
                 Batch Upload PDFs
               </Button>

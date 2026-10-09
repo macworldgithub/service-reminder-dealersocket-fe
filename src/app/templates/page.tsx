@@ -254,7 +254,7 @@ export default function TemplatesPage() {
               onClick={() => setActiveType(tab.id as any)}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors cursor-pointer ${
                 activeType === tab.id
-                  ? 'bg-blue-600 text-white shadow-xs'
+                  ? 'bg-slate-900 text-white shadow-xs font-semibold'
                   : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
               }`}
             >
@@ -267,7 +267,7 @@ export default function TemplatesPage() {
         {/* Variables banner */}
         <div className="bg-slate-100/70 p-3.5 rounded-lg border border-slate-200 text-xs">
           <div className="font-semibold text-slate-700 flex items-center gap-1.5 mb-1.5">
-            <Code2 className="w-3.5 h-3.5 text-blue-600" />
+            <Code2 className="w-3.5 h-3.5 text-slate-700" />
             <span>Supported Dynamic Template Variables:</span>
           </div>
           <div className="flex flex-wrap gap-1.5">

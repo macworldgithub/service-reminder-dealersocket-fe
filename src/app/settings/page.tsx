@@ -586,7 +586,7 @@ export default function SettingsPage() {
                         onClick={() => setUrlFormat('query')}
                         className={`px-2.5 py-1 rounded-md transition ${
                           urlFormat === 'query'
-                            ? 'bg-blue-600 text-white font-semibold shadow-xs'
+                            ? 'bg-slate-900 text-white font-semibold shadow-xs'
                             : 'text-slate-600 hover:text-slate-900'
                         }`}
                       >
@@ -597,7 +597,7 @@ export default function SettingsPage() {
                         onClick={() => setUrlFormat('direct')}
                         className={`px-2.5 py-1 rounded-md transition ${
                           urlFormat === 'direct'
-                            ? 'bg-blue-600 text-white font-semibold shadow-xs'
+                            ? 'bg-slate-900 text-white font-semibold shadow-xs'
                             : 'text-slate-600 hover:text-slate-900'
                         }`}
                       >
@@ -608,7 +608,7 @@ export default function SettingsPage() {
                         onClick={() => setUrlFormat('header')}
                         className={`px-2.5 py-1 rounded-md transition ${
                           urlFormat === 'header'
-                            ? 'bg-blue-600 text-white font-semibold shadow-xs'
+                            ? 'bg-slate-900 text-white font-semibold shadow-xs'
                             : 'text-slate-600 hover:text-slate-900'
                         }`}
                       >
@@ -779,7 +779,7 @@ export default function SettingsPage() {
                     <div className="flex justify-end">
                       <Link
                         href={sampleResult.viewUrl || `/reports/${sampleResult.reportId}`}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg shadow-sm transition"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg shadow-sm border border-slate-900 transition"
                       >
                         View Report in Campaign Reports
                         <ArrowUpRight className="w-3.5 h-3.5" />
@@ -793,7 +793,7 @@ export default function SettingsPage() {
               <div className="bg-slate-900 text-slate-200 rounded-xl p-5 shadow-sm space-y-3 border border-slate-800">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
                   <div className="flex items-center gap-2">
-                    <Terminal className="w-4 h-4 text-blue-400" />
+                    <Terminal className="w-4 h-4 text-slate-400" />
                     <span className="text-xs font-bold text-white uppercase tracking-wider">
                       Webhook Ingestion Code Examples ({activeDealership?.name || 'South Morang Hyundai'})
                     </span>
@@ -803,7 +803,7 @@ export default function SettingsPage() {
                       type="button"
                       onClick={() => setCodeSnippetTab('curl')}
                       className={`px-2.5 py-1 text-xs rounded-md transition font-medium ${
-                        codeSnippetTab === 'curl' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'
+                        codeSnippetTab === 'curl' ? 'bg-[#1e293b] text-white border border-slate-700' : 'text-slate-400 hover:text-white'
                       }`}
                     >
                       cURL
@@ -812,7 +812,7 @@ export default function SettingsPage() {
                       type="button"
                       onClick={() => setCodeSnippetTab('python')}
                       className={`px-2.5 py-1 text-xs rounded-md transition font-medium ${
-                        codeSnippetTab === 'python' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'
+                        codeSnippetTab === 'python' ? 'bg-[#1e293b] text-white border border-slate-700' : 'text-slate-400 hover:text-white'
                       }`}
                     >
                       Python
@@ -821,7 +821,7 @@ export default function SettingsPage() {
                       type="button"
                       onClick={() => setCodeSnippetTab('node')}
                       className={`px-2.5 py-1 text-xs rounded-md transition font-medium ${
-                        codeSnippetTab === 'node' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'
+                        codeSnippetTab === 'node' ? 'bg-[#1e293b] text-white border border-slate-700' : 'text-slate-400 hover:text-white'
                       }`}
                     >
                       Node.js

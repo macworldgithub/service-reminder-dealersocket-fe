@@ -28,7 +28,7 @@ export const DealerSocketLogo: React.FC<DealerSocketLogoProps> = ({
   return (
     <div
       className={`relative inline-flex items-center justify-center shrink-0 ${sizeMap[size]} ${
-        withGlow ? 'drop-shadow-[0_4px_12px_rgba(37,99,235,0.35)]' : ''
+        withGlow ? 'drop-shadow-[0_4px_14px_rgba(15,23,42,0.4)]' : ''
       } ${className}`}
     >
       <svg
@@ -41,16 +41,16 @@ export const DealerSocketLogo: React.FC<DealerSocketLogoProps> = ({
       >
         <defs>
           <linearGradient id="ds-grad-primary" x1="4" y1="4" x2="44" y2="44" gradientUnits="userSpaceOnUse">
-            <stop stopColor="#2563EB" />
-            <stop offset="0.5" stopColor="#1D4ED8" />
-            <stop offset="1" stopColor="#1E40AF" />
+            <stop stopColor="#1e293b" />
+            <stop offset="0.5" stopColor="#0f172a" />
+            <stop offset="1" stopColor="#020617" />
           </linearGradient>
           <linearGradient id="ds-grad-accent" x1="12" y1="10" x2="36" y2="38" gradientUnits="userSpaceOnUse">
-            <stop stopColor="#60A5FA" />
-            <stop offset="1" stopColor="#38BDF8" />
+            <stop stopColor="#94a3b8" />
+            <stop offset="1" stopColor="#e2e8f0" />
           </linearGradient>
           <linearGradient id="ds-grad-surface" x1="0" y1="0" x2="0" y2="48" gradientUnits="userSpaceOnUse">
-            <stop stopColor="#FFFFFF" stopOpacity="0.2" />
+            <stop stopColor="#FFFFFF" stopOpacity="0.15" />
             <stop offset="1" stopColor="#FFFFFF" stopOpacity="0.0" />
           </linearGradient>
         </defs>
@@ -63,8 +63,8 @@ export const DealerSocketLogo: React.FC<DealerSocketLogoProps> = ({
           height="42"
           rx="11"
           fill="url(#ds-grad-primary)"
-          stroke="#3B82F6"
-          strokeWidth="1.5"
+          stroke="#334155"
+          strokeWidth="1.25"
         />
 
         {/* Gloss highlight */}
@@ -79,9 +79,9 @@ export const DealerSocketLogo: React.FC<DealerSocketLogoProps> = ({
 
         {/* Automotive Gauge Arc / Connected Velocity Track */}
         <path
-          d="M13 31C11.5 28.5 11 25.5 11 22.5C11 15.6 16.6 10 23.5 10C30.4 10 36 15.6 36 22.5C36 25.5 35.5 28.5 34 31"
+          d="M13 31C11.5 28.5 11 22.5 11 22.5C11 15.6 16.6 10 23.5 10C30.4 10 36 15.6 36 22.5C36 25.5 35.5 28.5 34 31"
           stroke="url(#ds-grad-accent)"
-          strokeWidth="2.75"
+          strokeWidth="2.5"
           strokeLinecap="round"
         />
 
@@ -96,11 +96,11 @@ export const DealerSocketLogo: React.FC<DealerSocketLogoProps> = ({
 
         {/* Central Precision Pivot Ring */}
         <circle cx="23.5" cy="27.5" r="4" fill="#FFFFFF" />
-        <circle cx="23.5" cy="27.5" r="2" fill="#1D4ED8" />
+        <circle cx="23.5" cy="27.5" r="2" fill="#0f172a" />
 
         {/* Automotive Pulse Dots */}
-        <circle cx="14" cy="33" r="1.75" fill="#93C5FD" />
-        <circle cx="33" cy="33" r="1.75" fill="#93C5FD" />
+        <circle cx="14" cy="33" r="1.75" fill="#64748b" />
+        <circle cx="33" cy="33" r="1.75" fill="#64748b" />
       </svg>
     </div>
   );

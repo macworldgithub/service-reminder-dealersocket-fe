@@ -360,16 +360,16 @@ export default function ReportDetailPage() {
             </div>
 
             {/* Individual Report Revenue Lookup & Date Filter Card */}
-            <div className="bg-white rounded-lg border border-blue-200 shadow-xs overflow-hidden">
-              <div className="bg-gradient-to-r from-blue-50/80 via-indigo-50/50 to-white px-5 py-4 border-b border-blue-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div className="bg-white rounded-xl border border-slate-200/90 shadow-2xs overflow-hidden">
+              <div className="bg-slate-50/70 px-5 py-4 border-b border-slate-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center shadow-xs">
+                  <div className="w-8 h-8 rounded-lg bg-slate-900 text-white flex items-center justify-center shadow-xs">
                     <DollarSign className="w-4 h-4" />
                   </div>
                   <div>
                     <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
                       <span>Individual Report Revenue Lookup</span>
-                      <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">
+                      <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
                         Date Range Filter
                       </span>
                     </h2>
@@ -383,7 +383,7 @@ export default function ReportDetailPage() {
                   <Button
                     size="sm"
                     variant="outline"
-                    className="border-blue-300 text-blue-700 hover:bg-blue-50 text-xs"
+                    className="border-slate-300 text-slate-700 hover:bg-slate-100 text-xs"
                     onClick={() => handleViewRecordsInGrid()}
                     icon={<ArrowRight className="w-3.5 h-3.5" />}
                   >
@@ -396,7 +396,7 @@ export default function ReportDetailPage() {
                 {/* Date Filter Controls */}
                 <div className="flex flex-wrap items-center gap-3 bg-slate-50/80 p-3 rounded-lg border border-slate-200">
                   <div className="flex items-center gap-2 text-xs">
-                    <Calendar className="w-4 h-4 text-blue-600 shrink-0" />
+                    <Calendar className="w-4 h-4 text-slate-500 shrink-0" />
                     <span className="font-semibold text-slate-700">From Date:</span>
                     <input
                       type="date"
@@ -405,7 +405,7 @@ export default function ReportDetailPage() {
                         setLookupDateFrom(e.target.value);
                         fetchRevenueLookup(e.target.value, lookupDateTo);
                       }}
-                      className="px-2 py-1 border border-slate-300 rounded text-xs bg-white text-slate-800 shadow-2xs font-mono"
+                      className="px-2 py-1 border border-slate-300 rounded text-xs bg-white text-slate-800 shadow-2xs font-mono focus:outline-none focus:ring-1 focus:ring-slate-900"
                     />
                     <span className="font-semibold text-slate-700 ml-1">To Date:</span>
                     <input
@@ -415,7 +415,7 @@ export default function ReportDetailPage() {
                         setLookupDateTo(e.target.value);
                         fetchRevenueLookup(lookupDateFrom, e.target.value);
                       }}
-                      className="px-2 py-1 border border-slate-300 rounded text-xs bg-white text-slate-800 shadow-2xs font-mono"
+                      className="px-2 py-1 border border-slate-300 rounded text-xs bg-white text-slate-800 shadow-2xs font-mono focus:outline-none focus:ring-1 focus:ring-slate-900"
                     />
                     {(lookupDateFrom || lookupDateTo) && (
                       <button
@@ -435,7 +435,7 @@ export default function ReportDetailPage() {
                       onClick={() => applyDatePreset('entire')}
                       className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
                         !lookupDateFrom && !lookupDateTo
-                          ? 'bg-blue-600 text-white'
+                          ? 'bg-slate-900 text-white font-semibold shadow-xs border border-slate-900'
                           : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
                       }`}
                     >
@@ -451,7 +451,7 @@ export default function ReportDetailPage() {
                           setSelectedPresetYear(y);
                           applyDatePreset('year', y);
                         }}
-                        className="bg-white border border-slate-200 text-slate-700 text-[11px] font-semibold rounded px-1.5 py-0.5 cursor-pointer hover:border-slate-300"
+                        className="bg-white border border-slate-200 text-slate-700 text-[11px] font-semibold rounded px-1.5 py-0.5 cursor-pointer hover:border-slate-300 focus:outline-none focus:ring-1 focus:ring-slate-900"
                       >
                         {reportYears.map((yr) => (
                           <option key={yr} value={yr}>
@@ -465,7 +465,7 @@ export default function ReportDetailPage() {
                       onClick={() => applyDatePreset('year', selectedPresetYear)}
                       className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
                         lookupDateFrom === `${selectedPresetYear}-01-01` && lookupDateTo === `${selectedPresetYear}-12-31`
-                          ? 'bg-blue-600 text-white'
+                          ? 'bg-slate-900 text-white font-semibold shadow-xs border border-slate-900'
                           : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
                       }`}
                     >
@@ -475,7 +475,7 @@ export default function ReportDetailPage() {
                       onClick={() => applyDatePreset('q1', selectedPresetYear)}
                       className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
                         lookupDateFrom === `${selectedPresetYear}-01-01` && lookupDateTo === `${selectedPresetYear}-03-31`
-                          ? 'bg-blue-600 text-white'
+                          ? 'bg-slate-900 text-white font-semibold shadow-xs border border-slate-900'
                           : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
                       }`}
                     >
@@ -485,7 +485,7 @@ export default function ReportDetailPage() {
                       onClick={() => applyDatePreset('q2', selectedPresetYear)}
                       className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
                         lookupDateFrom === `${selectedPresetYear}-04-01` && lookupDateTo === `${selectedPresetYear}-06-30`
-                          ? 'bg-blue-600 text-white'
+                          ? 'bg-slate-900 text-white font-semibold shadow-xs border border-slate-900'
                           : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
                       }`}
                     >
@@ -495,7 +495,7 @@ export default function ReportDetailPage() {
                       onClick={() => applyDatePreset('q3', selectedPresetYear)}
                       className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
                         lookupDateFrom === `${selectedPresetYear}-07-01` && lookupDateTo === `${selectedPresetYear}-09-30`
-                          ? 'bg-blue-600 text-white'
+                          ? 'bg-slate-900 text-white font-semibold shadow-xs border border-slate-900'
                           : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
                       }`}
                     >
@@ -505,7 +505,7 @@ export default function ReportDetailPage() {
                       onClick={() => applyDatePreset('q4', selectedPresetYear)}
                       className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
                         lookupDateFrom === `${selectedPresetYear}-10-01` && lookupDateTo === `${selectedPresetYear}-12-31`
-                          ? 'bg-blue-600 text-white'
+                          ? 'bg-slate-900 text-white font-semibold shadow-xs border border-slate-900'
                           : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
                       }`}
                     >
@@ -518,48 +518,48 @@ export default function ReportDetailPage() {
                 {revenueLookup && (
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-1">
                     {/* Filtered Revenue Card */}
-                    <div className="p-4 rounded-lg bg-emerald-50/60 border border-emerald-200 shadow-2xs">
-                      <span className="text-[11px] font-semibold text-emerald-800 uppercase tracking-wider block">
+                    <div className="p-4 rounded-xl bg-white border border-slate-200/90 shadow-2xs">
+                      <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">
                         Period Tracked Revenue
                       </span>
-                      <div className="text-2xl font-black text-emerald-700 font-mono mt-1">
+                      <div className="text-2xl font-bold text-slate-900 font-mono mt-1">
                         {formatCurrency(revenueLookup.filteredRevenue)}
                       </div>
-                      <div className="mt-2 flex items-center justify-between text-xs text-emerald-800">
+                      <div className="mt-2 flex items-center justify-between text-xs text-slate-600">
                         <span>Share of Total:</span>
-                        <strong className="font-semibold">{revenueLookup.percentageOfTotal}%</strong>
+                        <strong className="font-semibold text-slate-900">{revenueLookup.percentageOfTotal}%</strong>
                       </div>
-                      <div className="w-full bg-emerald-200 rounded-full h-1.5 mt-1 overflow-hidden">
+                      <div className="w-full bg-slate-100 rounded-full h-1.5 mt-1 overflow-hidden">
                         <div
                           className="bg-emerald-600 h-1.5 rounded-full"
                           style={{ width: `${Math.min(100, revenueLookup.percentageOfTotal)}%` }}
                         />
                       </div>
-                      <span className="text-[10px] text-emerald-700/80 block mt-1">
+                      <span className="text-[10px] text-slate-400 block mt-1">
                         Report Total: {formatCurrency(revenueLookup.totalRevenue)}
                       </span>
                     </div>
 
                     {/* Filtered Orders Card */}
-                    <div className="p-4 rounded-lg bg-blue-50/60 border border-blue-200 shadow-2xs">
-                      <span className="text-[11px] font-semibold text-blue-800 uppercase tracking-wider block">
+                    <div className="p-4 rounded-xl bg-white border border-slate-200/90 shadow-2xs">
+                      <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">
                         Closed Repair Orders (ROs)
                       </span>
-                      <div className="text-2xl font-black text-blue-700 font-mono mt-1">
+                      <div className="text-2xl font-bold text-slate-900 font-mono mt-1">
                         {revenueLookup.filteredCount}
                       </div>
-                      <div className="mt-2 flex items-center justify-between text-xs text-blue-800">
+                      <div className="mt-2 flex items-center justify-between text-xs text-slate-600">
                         <span>Share of Records:</span>
-                        <strong className="font-semibold">
+                        <strong className="font-semibold text-slate-900">
                           {revenueLookup.totalRecords > 0
                             ? Math.round((revenueLookup.filteredCount / revenueLookup.totalRecords) * 1000) / 10
                             : 0}
                           %
                         </strong>
                       </div>
-                      <div className="w-full bg-blue-200 rounded-full h-1.5 mt-1 overflow-hidden">
+                      <div className="w-full bg-slate-100 rounded-full h-1.5 mt-1 overflow-hidden">
                         <div
-                          className="bg-blue-600 h-1.5 rounded-full"
+                          className="bg-slate-900 h-1.5 rounded-full"
                           style={{
                             width: `${
                               revenueLookup.totalRecords > 0
@@ -569,26 +569,26 @@ export default function ReportDetailPage() {
                           }}
                         />
                       </div>
-                      <span className="text-[10px] text-blue-700/80 block mt-1">
+                      <span className="text-[10px] text-slate-400 block mt-1">
                         Total Report Rows: {revenueLookup.totalRecords}
                       </span>
                     </div>
 
                     {/* Period Average RO Card */}
-                    <div className="p-4 rounded-lg bg-indigo-50/60 border border-indigo-200 shadow-2xs">
-                      <span className="text-[11px] font-semibold text-indigo-800 uppercase tracking-wider block">
+                    <div className="p-4 rounded-xl bg-white border border-slate-200/90 shadow-2xs">
+                      <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">
                         Period Average RO Amount
                       </span>
-                      <div className="text-2xl font-black text-indigo-700 font-mono mt-1">
+                      <div className="text-2xl font-bold text-slate-900 font-mono mt-1">
                         {formatCurrency(revenueLookup.filteredAvgRoAmount)}
                       </div>
-                      <div className="mt-2 flex items-center justify-between text-xs text-indigo-800">
+                      <div className="mt-2 flex items-center justify-between text-xs text-slate-600">
                         <span>Overall Report Avg:</span>
-                        <strong className="font-semibold">{formatCurrency(revenueLookup.overallAvgRo)}</strong>
+                        <strong className="font-semibold text-slate-900">{formatCurrency(revenueLookup.overallAvgRo)}</strong>
                       </div>
-                      <div className="text-[11px] text-indigo-700 mt-1.5 flex items-center justify-between">
+                      <div className="text-[11px] text-slate-500 mt-1.5 flex items-center justify-between">
                         <span>RO Range:</span>
-                        <span className="font-mono font-medium">
+                        <span className="font-mono font-medium text-slate-800">
                           {formatCurrency(revenueLookup.minRoAmount)} – {formatCurrency(revenueLookup.maxRoAmount)}
                         </span>
                       </div>
@@ -600,18 +600,18 @@ export default function ReportDetailPage() {
 
             {/* Monthly Revenue & RO Breakdown */}
             {revenueLookup?.monthlyBreakdown && revenueLookup.monthlyBreakdown.length > 0 && (
-              <div className="bg-white rounded-lg border border-slate-200 shadow-xs overflow-hidden">
-                <div className="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between">
+              <div className="bg-white rounded-xl border border-slate-200/90 shadow-2xs overflow-hidden">
+                <div className="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
                   <div>
                     <h3 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
-                      <BarChart3 className="w-4 h-4 text-blue-600" />
+                      <BarChart3 className="w-4 h-4 text-slate-700" />
                       <span>Monthly Revenue Distribution</span>
                     </h3>
                     <p className="text-xs text-slate-500">
                       Breakdown of Closed RO revenue and order counts month-by-month in this report
                     </p>
                   </div>
-                  <span className="text-xs font-semibold text-slate-600 bg-slate-100 px-2.5 py-1 rounded-md">
+                  <span className="text-xs font-semibold text-slate-700 bg-slate-100 px-2.5 py-1 rounded-md border border-slate-200/70">
                     {revenueLookup.monthlyBreakdown.length} Active Months
                   </span>
                 </div>
@@ -652,7 +652,7 @@ export default function ReportDetailPage() {
                               <div className="flex items-center gap-2">
                                 <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
                                   <div
-                                    className="bg-blue-600 h-1.5 rounded-full"
+                                    className="bg-slate-900 h-1.5 rounded-full"
                                     style={{ width: `${Math.min(100, pct)}%` }}
                                   />
                                 </div>
@@ -664,7 +664,7 @@ export default function ReportDetailPage() {
                             <td className="py-2.5 px-4 text-right">
                               <button
                                 onClick={() => handleApplySingleMonth(m.month)}
-                                className="px-2 py-1 text-[11px] font-medium text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded border border-blue-200 transition-colors"
+                                className="px-2 py-1 text-[11px] font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-100 rounded border border-slate-200 transition-colors cursor-pointer"
                               >
                                 Filter Month
                               </button>

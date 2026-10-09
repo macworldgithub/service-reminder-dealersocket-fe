@@ -268,7 +268,7 @@ export default function ReportsPage() {
             variant="outline"
             size="sm"
             onClick={() => setIsBatchModalOpen(true)}
-            icon={<Layers className="w-4 h-4 text-blue-600" />}
+            icon={<Layers className="w-4 h-4 text-slate-700" />}
           >
             Batch Upload PDFs
           </Button>
@@ -282,7 +282,7 @@ export default function ReportsPage() {
     >
       <div className="space-y-4">
         {/* Search & Filter Bar */}
-        <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-xs space-y-3">
+        <div className="bg-white p-4 rounded-xl border border-slate-200/90 shadow-2xs space-y-3">
           <div className="flex flex-col md:flex-row items-center justify-between gap-3">
             <div className="relative w-full md:w-80">
               <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
@@ -291,20 +291,20 @@ export default function ReportsPage() {
                 placeholder="Search report title, file, or campaign..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-9 pr-3 py-1.5 text-xs rounded-md border border-slate-300 focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white"
+                className="w-full pl-9 pr-3 py-1.5 text-xs rounded-md border border-slate-300 focus:outline-none focus:ring-1 focus:ring-slate-900 focus:border-slate-400 bg-white"
               />
             </div>
 
             {/* Quick Days & Date Range Inputs */}
             <div className="flex flex-wrap items-center gap-2 w-full md:w-auto text-xs">
               {/* Today / Yesterday Toggle Pills */}
-              <div className="inline-flex items-center p-0.5 rounded-md bg-slate-100 border border-slate-200 shadow-2xs">
+              <div className="inline-flex items-center p-0.5 rounded-lg bg-slate-100 border border-slate-200/90 shadow-2xs">
                 <button
                   type="button"
                   onClick={() => handleQuickDatePreset('today')}
-                  className={`px-3 py-1 text-xs font-semibold rounded transition-colors cursor-pointer ${
+                  className={`px-3 py-1 text-xs font-semibold rounded-md transition-colors cursor-pointer ${
                     isTodayActive
-                      ? 'bg-blue-600 text-white shadow-2xs'
+                      ? 'bg-slate-900 text-white shadow-xs border border-slate-900'
                       : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/70'
                   }`}
                   title="Filter by reports from Today"
@@ -314,9 +314,9 @@ export default function ReportsPage() {
                 <button
                   type="button"
                   onClick={() => handleQuickDatePreset('yesterday')}
-                  className={`px-3 py-1 text-xs font-semibold rounded transition-colors cursor-pointer ${
+                  className={`px-3 py-1 text-xs font-semibold rounded-md transition-colors cursor-pointer ${
                     isYesterdayActive
-                      ? 'bg-blue-600 text-white shadow-2xs'
+                      ? 'bg-slate-900 text-white shadow-xs border border-slate-900'
                       : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/70'
                   }`}
                   title="Filter by reports from Yesterday"
@@ -327,20 +327,20 @@ export default function ReportsPage() {
 
               {/* Custom Date Range Picker */}
               <div className="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1 rounded-md border border-slate-200">
-                <Calendar className="w-3.5 h-3.5 text-blue-600" />
+                <Calendar className="w-3.5 h-3.5 text-slate-500" />
                 <span className="text-slate-600 font-medium">From:</span>
                 <input
                   type="date"
                   value={dateFromFilter}
                   onChange={(e) => setDateFromFilter(e.target.value)}
-                  className="px-1.5 py-0.5 border border-slate-300 rounded text-xs bg-white text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="px-1.5 py-0.5 border border-slate-300 rounded text-xs bg-white text-slate-800 focus:outline-none focus:ring-1 focus:ring-slate-900"
                 />
                 <span className="text-slate-600 font-medium ml-1">To:</span>
                 <input
                   type="date"
                   value={dateToFilter}
                   onChange={(e) => setDateToFilter(e.target.value)}
-                  className="px-1.5 py-0.5 border border-slate-300 rounded text-xs bg-white text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="px-1.5 py-0.5 border border-slate-300 rounded text-xs bg-white text-slate-800 focus:outline-none focus:ring-1 focus:ring-slate-900"
                 />
                 {(dateFromFilter || dateToFilter) && (
                   <button
@@ -364,8 +364,8 @@ export default function ReportsPage() {
               onClick={() => handleQuickDatePreset('today')}
               className={`px-2.5 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
                 isTodayActive
-                  ? 'bg-blue-600 text-white font-semibold'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  ? 'bg-slate-900 text-white font-semibold shadow-xs border border-slate-900'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900 border border-slate-200/60'
               }`}
             >
               Today
@@ -375,8 +375,8 @@ export default function ReportsPage() {
               onClick={() => handleQuickDatePreset('yesterday')}
               className={`px-2.5 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
                 isYesterdayActive
-                  ? 'bg-blue-600 text-white font-semibold'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  ? 'bg-slate-900 text-white font-semibold shadow-xs border border-slate-900'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900 border border-slate-200/60'
               }`}
             >
               Yesterday
@@ -386,8 +386,8 @@ export default function ReportsPage() {
               onClick={() => handleQuickDatePreset('all')}
               className={`px-2.5 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
                 !dateFromFilter && !dateToFilter
-                  ? 'bg-blue-600 text-white font-semibold'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  ? 'bg-slate-900 text-white font-semibold shadow-xs border border-slate-900'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900 border border-slate-200/60'
               }`}
             >
               All Time
@@ -403,8 +403,8 @@ export default function ReportsPage() {
                   onClick={() => handleYearPreset(year)}
                   className={`px-2.5 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
                     isYearActive
-                      ? 'bg-blue-600 text-white font-semibold shadow-2xs'
-                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                      ? 'bg-slate-900 text-white font-semibold shadow-xs border border-slate-900'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900 border border-slate-200/60'
                   }`}
                 >
                   Year {year}
@@ -418,7 +418,7 @@ export default function ReportsPage() {
               <select
                 value={quarterYear}
                 onChange={(e) => setQuarterYear(Number(e.target.value))}
-                className="bg-white border border-slate-300 text-slate-700 font-semibold text-[11px] rounded px-1.5 py-0.5 focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer shadow-2xs"
+                className="bg-white border border-slate-300 text-slate-800 font-semibold text-[11px] rounded px-1.5 py-0.5 focus:outline-none focus:ring-1 focus:ring-slate-900 cursor-pointer shadow-2xs"
                 title="Select Year for Quarters"
               >
                 {availableYears.map((yr) => (
@@ -438,8 +438,8 @@ export default function ReportsPage() {
                     onClick={() => handleQuarterPreset(quarterYear, q as 1 | 2 | 3 | 4)}
                     className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
                       isActive
-                        ? 'bg-blue-600 text-white font-semibold shadow-2xs'
-                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                        ? 'bg-slate-900 text-white font-semibold shadow-xs border border-slate-900'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900 border border-slate-200/60'
                     }`}
                     title={`Filter by Q${q} ${quarterYear} (${qDates.label})`}
                   >
@@ -453,36 +453,36 @@ export default function ReportsPage() {
 
         {/* Aggregate Revenue & Batch Summary Bar */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <div className="bg-white p-3 rounded-lg border border-slate-200 shadow-2xs flex items-center justify-between">
+          <div className="bg-white p-3.5 rounded-xl border border-slate-200/90 shadow-2xs flex items-center justify-between">
             <div>
               <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Filtered Reports</span>
-              <div className="text-lg font-bold text-slate-900 mt-0.5">{reports.length} Reports</div>
+              <div className="text-xl font-bold text-slate-900 mt-0.5">{reports.length} Reports</div>
             </div>
-            <div className="w-8 h-8 rounded-lg bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center font-bold text-xs shadow-2xs">
+            <div className="w-8 h-8 rounded-lg bg-slate-100 border border-slate-200/80 text-slate-700 flex items-center justify-center font-bold text-xs shadow-2xs">
               <FileSpreadsheet className="w-4 h-4" strokeWidth={1.75} />
             </div>
           </div>
 
-          <div className="bg-white p-3 rounded-lg border border-emerald-200 bg-emerald-50/20 shadow-2xs flex items-center justify-between">
+          <div className="bg-white p-3.5 rounded-xl border border-slate-200/90 shadow-2xs flex items-center justify-between">
             <div>
-              <span className="text-[11px] font-semibold text-emerald-800 uppercase tracking-wider">Total Tracked Revenue</span>
-              <div className="text-lg font-black text-emerald-700 font-mono mt-0.5">
+              <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Total Tracked Revenue</span>
+              <div className="text-xl font-bold font-mono text-slate-900 mt-0.5">
                 {formatCurrency(totalTrackedRevenue)}
               </div>
             </div>
-            <div className="w-8 h-8 rounded-lg bg-emerald-100/80 border border-emerald-200 text-emerald-700 flex items-center justify-center shadow-2xs">
+            <div className="w-8 h-8 rounded-lg bg-emerald-50 border border-emerald-200/80 text-emerald-700 flex items-center justify-center shadow-2xs">
               <DollarSign className="w-4 h-4" strokeWidth={1.75} />
             </div>
           </div>
 
-          <div className="bg-white p-3 rounded-lg border border-slate-200 shadow-2xs flex items-center justify-between">
+          <div className="bg-white p-3.5 rounded-xl border border-slate-200/90 shadow-2xs flex items-center justify-between">
             <div>
               <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Total Repair Order Rows</span>
-              <div className="text-lg font-bold text-slate-900 mt-0.5">
+              <div className="text-xl font-bold text-slate-900 mt-0.5">
                 {reports.reduce((acc, r) => acc + (r.recordCount || 0), 0).toLocaleString()} Records
               </div>
             </div>
-            <div className="w-8 h-8 rounded-lg bg-slate-100 border border-slate-200 text-slate-700 flex items-center justify-center shadow-2xs">
+            <div className="w-8 h-8 rounded-lg bg-slate-100 border border-slate-200/80 text-slate-700 flex items-center justify-center shadow-2xs">
               <Layers className="w-4 h-4" strokeWidth={1.75} />
             </div>
           </div>
@@ -555,7 +555,7 @@ export default function ReportsPage() {
                           <div className="flex flex-col gap-0.5">
                             <Link
                               href={`/reports/${r._id}`}
-                              className="hover:text-blue-600 font-semibold text-slate-900 flex items-center gap-1.5"
+                              className="hover:text-slate-600 font-semibold text-slate-900 flex items-center gap-1.5"
                             >
                               <span>{r.name}</span>
                               {r.version && r.version > 1 && (
@@ -575,8 +575,8 @@ export default function ReportsPage() {
                         {/* Prominent Visual Date Badge */}
                         <td className="py-3 px-4">
                           {hasPeriod ? (
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200 shadow-2xs">
-                              <Calendar className="w-3.5 h-3.5 text-blue-600 shrink-0" strokeWidth={1.75} />
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-slate-100/90 text-slate-800 border border-slate-200/90 shadow-2xs font-mono">
+                              <Calendar className="w-3.5 h-3.5 text-slate-500 shrink-0" strokeWidth={1.75} />
                               {`${formatDate(r.reportDateFrom)} – ${formatDate(r.reportDateTo)}`}
                             </span>
                           ) : (
@@ -630,7 +630,7 @@ export default function ReportsPage() {
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="h-7 px-2 text-slate-600 hover:text-blue-600 hover:bg-blue-50"
+                              className="h-7 px-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100"
                               title="Export PDF"
                               onClick={() => {
                                 downloadAuthenticatedFile({
@@ -649,7 +649,7 @@ export default function ReportsPage() {
                                 setEditName(r.name);
                                 setEditCampaign(r.campaignName || '');
                               }}
-                              className="p-1.5 rounded-md text-slate-400 hover:text-blue-600 hover:bg-blue-50 border border-transparent hover:border-blue-100 transition-colors"
+                              className="p-1.5 rounded-md text-slate-400 hover:text-slate-800 hover:bg-slate-100 border border-transparent hover:border-slate-200 transition-colors"
                               title="Edit metadata"
                             >
                               <Edit2 className="w-3.5 h-3.5" strokeWidth={1.75} />
@@ -657,7 +657,7 @@ export default function ReportsPage() {
 
                             <button
                               onClick={() => handleDuplicate(r._id)}
-                              className="p-1.5 rounded-md text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 border border-transparent hover:border-indigo-100 transition-colors"
+                              className="p-1.5 rounded-md text-slate-400 hover:text-slate-800 hover:bg-slate-100 border border-transparent hover:border-slate-200 transition-colors"
                               title="Duplicate as new version"
                             >
                               <Copy className="w-3.5 h-3.5" strokeWidth={1.75} />

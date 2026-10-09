@@ -50,7 +50,7 @@ export default function LoginPage() {
           <DealerSocketLogo size="xl" withGlow />
         </div>
         <h2 className="text-2xl font-bold tracking-tight text-slate-900 flex items-center justify-center gap-0.5">
-          <span>Nexi</span><span className="text-blue-600">met</span>
+          <span>Nexi</span><span className="text-slate-800">met</span>
         </h2>
         <p className="mt-1 text-xs text-slate-500">
           Automotive Campaign Intelligence &amp; Service Revenue Platform
@@ -58,7 +58,7 @@ export default function LoginPage() {
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white py-8 px-6 shadow-sm border border-slate-200 sm:rounded-xl sm:px-10">
+        <div className="bg-white py-8 px-6 shadow-sm border border-slate-200/90 sm:rounded-2xl sm:px-10">
           {errorMessage && (
             <div className="mb-5 p-3 rounded-md bg-rose-50 border border-rose-200 text-xs text-rose-700 font-medium">
               {errorMessage}
@@ -78,7 +78,7 @@ export default function LoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="name@dealership.com"
-                  className="w-full pl-9 pr-3 py-2 text-sm rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                  className="w-full pl-9 pr-3 py-2 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 bg-white"
                 />
               </div>
             </div>
@@ -88,7 +88,7 @@ export default function LoginPage() {
                 <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider">
                   Password
                 </label>
-                <span className="text-[11px] text-blue-600 hover:underline cursor-pointer">
+                <span className="text-[11px] text-slate-600 hover:text-slate-900 hover:underline cursor-pointer">
                   Forgot password?
                 </span>
               </div>
@@ -99,7 +99,7 @@ export default function LoginPage() {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 text-sm rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                  className="w-full pl-9 pr-3 py-2 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 bg-white"
                 />
               </div>
             </div>
@@ -123,9 +123,9 @@ export default function LoginPage() {
             <button
               type="button"
               onClick={() => handleQuickLogin('devs@neximet.com', 'Devs@123456')}
-              className="w-full py-2 px-3 rounded-md border border-slate-200 bg-slate-50 hover:bg-slate-100 hover:border-slate-300 text-xs font-semibold text-slate-800 text-center transition-colors flex items-center justify-center gap-2 cursor-pointer"
+              className="w-full py-2 px-3 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 hover:border-slate-300 text-xs font-semibold text-slate-800 text-center transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-2xs"
             >
-              <span className="w-2 h-2 rounded-full bg-blue-600 animate-pulse" />
+              <span className="w-2 h-2 rounded-full bg-slate-900" />
               <span>Fill Credentials: Devs (devs@neximet.com)</span>
             </button>
           </div>

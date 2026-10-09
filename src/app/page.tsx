@@ -91,7 +91,7 @@ export default function DashboardPage() {
             variant="outline"
             size="sm"
             onClick={() => setIsBatchModalOpen(true)}
-            icon={<Layers className="w-4 h-4 text-blue-600" strokeWidth={1.75} />}
+            icon={<Layers className="w-4 h-4 text-slate-700" strokeWidth={1.75} />}
           >
             Batch Upload PDFs
           </Button>
@@ -105,12 +105,12 @@ export default function DashboardPage() {
     >
       {/* 4 Clean Operational Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-xs hover:border-slate-300 transition-colors">
+        <div className="bg-white p-4 rounded-xl border border-slate-200/90 shadow-2xs hover:border-slate-300 transition-colors">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
               Total Ingested Reports
             </span>
-            <div className="w-8 h-8 rounded-lg bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 shadow-2xs">
+            <div className="w-8 h-8 rounded-lg bg-slate-100 border border-slate-200/80 flex items-center justify-center text-slate-700 shadow-2xs">
               <FileSpreadsheet className="w-4 h-4" strokeWidth={1.75} />
             </div>
           </div>
@@ -122,12 +122,12 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-xs hover:border-slate-300 transition-colors">
+        <div className="bg-white p-4 rounded-xl border border-slate-200/90 shadow-2xs hover:border-slate-300 transition-colors">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
               Total Records Managed
             </span>
-            <div className="w-8 h-8 rounded-lg bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 shadow-2xs">
+            <div className="w-8 h-8 rounded-lg bg-emerald-50 border border-emerald-200/80 flex items-center justify-center text-emerald-700 shadow-2xs">
               <TrendingUp className="w-4 h-4" strokeWidth={1.75} />
             </div>
           </div>
@@ -139,12 +139,12 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-xs hover:border-slate-300 transition-colors">
+        <div className="bg-white p-4 rounded-xl border border-slate-200/90 shadow-2xs hover:border-slate-300 transition-colors">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
               Latest Service Coverage
             </span>
-            <div className="w-8 h-8 rounded-lg bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 shadow-2xs">
+            <div className="w-8 h-8 rounded-lg bg-slate-100 border border-slate-200/80 flex items-center justify-center text-slate-700 shadow-2xs">
               <Calendar className="w-4 h-4" strokeWidth={1.75} />
             </div>
           </div>
@@ -156,12 +156,12 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-xs hover:border-slate-300 transition-colors">
+        <div className="bg-white p-4 rounded-xl border border-slate-200/90 shadow-2xs hover:border-slate-300 transition-colors">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
               Active Dealership
             </span>
-            <div className="w-8 h-8 rounded-lg bg-purple-50 border border-purple-100 flex items-center justify-center text-purple-600 shadow-2xs">
+            <div className="w-8 h-8 rounded-lg bg-slate-100 border border-slate-200/80 flex items-center justify-center text-slate-700 shadow-2xs">
               <Building2 className="w-4 h-4" strokeWidth={1.75} />
             </div>
           </div>
@@ -175,7 +175,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Recent Reports Table (Full Width) */}
-      <div className="w-full bg-white rounded-lg border border-slate-200 shadow-xs overflow-hidden flex flex-col">
+      <div className="w-full bg-white rounded-xl border border-slate-200/90 shadow-2xs overflow-hidden flex flex-col">
         <div className="px-5 py-3.5 border-b border-slate-200 flex items-center justify-between bg-slate-50/50">
           <div>
             <h2 className="text-sm font-semibold text-slate-900">Recent Campaign Reports</h2>
@@ -186,12 +186,12 @@ export default function DashboardPage() {
           <div className="flex items-center gap-3">
             <button
               onClick={() => setIsBatchModalOpen(true)}
-              className="text-xs font-medium text-blue-600 hover:text-blue-700 flex items-center gap-1.5 cursor-pointer"
+              className="text-xs font-medium text-slate-700 hover:text-slate-900 flex items-center gap-1.5 cursor-pointer"
             >
               <Layers className="w-3.5 h-3.5" strokeWidth={1.75} /> Batch Upload
             </button>
             <span className="text-slate-300">·</span>
-            <Link href="/reports" className="text-xs font-medium text-blue-600 hover:text-blue-700 flex items-center gap-1">
+            <Link href="/reports" className="text-xs font-medium text-slate-700 hover:text-slate-900 flex items-center gap-1">
               View All <ArrowRight className="w-3.5 h-3.5" strokeWidth={1.75} />
             </Link>
           </div>
@@ -224,7 +224,7 @@ export default function DashboardPage() {
                     <tr key={r._id} className="hover:bg-slate-50/80 transition-colors">
                       <td className="py-3 px-4 font-medium text-slate-900">
                         <div className="flex flex-col gap-0.5">
-                          <Link href={`/reports/${r._id}`} className="hover:text-blue-600 font-semibold text-slate-900 flex items-center gap-1.5">
+                          <Link href={`/reports/${r._id}`} className="hover:text-slate-600 font-semibold text-slate-900 flex items-center gap-1.5">
                             <span>{r.name}</span>
                             {r.version && r.version > 1 && (
                               <span className="text-[10px] font-mono font-medium px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 border border-slate-200">
@@ -243,8 +243,8 @@ export default function DashboardPage() {
                       {/* Prominent Visual Date Badge */}
                       <td className="py-3 px-4">
                         {hasDate ? (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200 shadow-2xs">
-                            <Calendar className="w-3.5 h-3.5 text-blue-600 shrink-0" strokeWidth={1.75} />
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-slate-100/90 text-slate-800 border border-slate-200/90 shadow-2xs font-mono">
+                            <Calendar className="w-3.5 h-3.5 text-slate-500 shrink-0" strokeWidth={1.75} />
                             {`${formatDate(r.reportDateFrom)} – ${formatDate(r.reportDateTo)}`}
                           </span>
                         ) : (
