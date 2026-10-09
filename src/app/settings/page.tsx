@@ -66,7 +66,9 @@ export default function SettingsPage() {
   );
 
   // Webhooks & API state
-  const [webhookUrl, setWebhookUrl] = useState('http://localhost:7000/api/webhooks/ingest');
+  const [urlFormat, setUrlFormat] = useState<'query' | 'direct' | 'header'>('query');
+  const [webhookUrl, setWebhookUrl] = useState('');
+  const [directWebhookUrl, setDirectWebhookUrl] = useState('');
   const [apiKey, setApiKey] = useState('ds_live_sk_9a8f27c3e104b46298fa');
   const [showApiKey, setShowApiKey] = useState(false);
   const [copiedUrl, setCopiedUrl] = useState(false);
@@ -76,13 +78,47 @@ export default function SettingsPage() {
   const [sampleResult, setSampleResult] = useState<any | null>(null);
   const [logs, setLogs] = useState<any[]>([]);
   const [logsLoading, setLogsLoading] = useState(false);
+  const [logsFilter, setLogsFilter] = useState<'current' | 'all'>('current');
   const [codeSnippetTab, setCodeSnippetTab] = useState<'curl' | 'python' | 'node'>('curl');
   const [copiedSnippet, setCopiedSnippet] = useState(false);
+
+  const fetchWebhookConfig = async () => {
+    try {
+      const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:7000';
+      const storeCode = activeDealership?.code || 'SMH-01';
+      const storeId = activeDealership?._id || storeCode;
+
+      const res = await api.get('/webhooks/config', {
+        params: { dealershipId: storeId },
+      });
+      if (res.data?.success && res.data?.data) {
+        const cfg = res.data.data;
+        if (cfg.apiKey) {
+          setApiKey(cfg.apiKey);
+        }
+        setWebhookUrl(`${origin}${cfg.webhookUrl || `/api/webhooks/ingest?store=${storeCode}`}`);
+        setDirectWebhookUrl(`${origin}${cfg.storeSpecificRouteUrl || `/api/webhooks/${storeCode}/ingest`}`);
+      } else {
+        setWebhookUrl(`${origin}/api/webhooks/ingest?store=${storeCode}`);
+        setDirectWebhookUrl(`${origin}/api/webhooks/${storeCode}/ingest`);
+      }
+    } catch (err) {
+      console.error('Failed to load webhook config', err);
+      const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:7000';
+      const storeCode = activeDealership?.code || 'SMH-01';
+      setWebhookUrl(`${origin}/api/webhooks/ingest?store=${storeCode}`);
+      setDirectWebhookUrl(`${origin}/api/webhooks/${storeCode}/ingest`);
+    }
+  };
 
   const fetchWebhookLogs = async () => {
     try {
       setLogsLoading(true);
-      const res = await api.get('/webhooks/logs');
+      const params: any = {};
+      if (logsFilter === 'current' && activeDealership?._id) {
+        params.dealershipId = activeDealership._id;
+      }
+      const res = await api.get('/webhooks/logs', { params });
       if (res.data?.success && Array.isArray(res.data?.data)) {
         setLogs(res.data.data);
       }
@@ -94,29 +130,34 @@ export default function SettingsPage() {
   };
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      setWebhookUrl(`${window.location.origin}/api/webhooks/ingest`);
-    }
-  }, []);
+    fetchWebhookConfig();
+  }, [activeDealership]);
 
   useEffect(() => {
     if (activeTab === 'integrations') {
       fetchWebhookLogs();
     }
-  }, [activeTab]);
+  }, [activeTab, logsFilter, activeDealership]);
 
   const handleSendPing = async () => {
     setPingLoading(true);
     setPingResult(null);
     try {
+      const storeCode = activeDealership?.code || 'SMH-01';
       const res = await api.post(
         '/webhooks/ping',
         {},
-        { headers: { 'x-api-key': apiKey } }
+        {
+          headers: {
+            'x-api-key': apiKey,
+            'x-store-code': storeCode,
+          },
+          params: { store: storeCode },
+        }
       );
       setPingResult({
         success: true,
-        message: res.data?.message || 'Webhook ping check successful (200 OK)',
+        message: res.data?.message || `Webhook ping check successful for ${activeDealership?.name || 'store'} (200 OK)`,
         timestamp: new Date().toLocaleTimeString(),
       });
       fetchWebhookLogs();
@@ -134,10 +175,17 @@ export default function SettingsPage() {
     setSampleLoading(true);
     setSampleResult(null);
     try {
+      const storeCode = activeDealership?.code || 'SMH-01';
       const res = await api.post(
-        '/webhooks/test-sample?sample=SMHY-(NSD)S-Rmndr(Mtdr).pdf',
+        '/webhooks/test-sample',
         {},
-        { headers: { 'x-api-key': apiKey } }
+        {
+          headers: {
+            'x-api-key': apiKey,
+            'x-store-code': storeCode,
+          },
+          params: { store: storeCode },
+        }
       );
       setSampleResult(res.data?.data);
       fetchWebhookLogs();
@@ -148,8 +196,20 @@ export default function SettingsPage() {
     }
   };
 
+  const getEffectiveWebhookUrl = () => {
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:7000';
+    const storeCode = activeDealership?.code || 'SMH-01';
+    if (urlFormat === 'direct') {
+      return directWebhookUrl || `${origin}/api/webhooks/${storeCode}/ingest`;
+    }
+    if (urlFormat === 'header') {
+      return `${origin}/api/webhooks/ingest`;
+    }
+    return webhookUrl || `${origin}/api/webhooks/ingest?store=${storeCode}`;
+  };
+
   const copyWebhookUrl = () => {
-    navigator.clipboard.writeText(webhookUrl);
+    navigator.clipboard.writeText(getEffectiveWebhookUrl());
     setCopiedUrl(true);
     setTimeout(() => setCopiedUrl(false), 2500);
   };
@@ -498,30 +558,82 @@ export default function SettingsPage() {
 
               {/* Endpoint Configuration & API Key */}
               <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-5">
-                <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
                   <div>
-                    <h3 className="text-sm font-bold text-slate-900">DealerSocket Inbound Webhook Configuration</h3>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-sm font-bold text-slate-900">DealerSocket Inbound Webhook Configuration</h3>
+                      <Badge variant="default" size="sm" className="font-mono">
+                        {activeDealership?.code || 'SMH-01'}
+                      </Badge>
+                    </div>
                     <p className="text-xs text-slate-500 mt-0.5">
-                      Configure your DMS or external cron script to stream closed RO reports straight into South Morang Hyundai.
+                      Stream closed RO reports straight into <span className="font-semibold text-slate-800">{activeDealership?.name || 'South Morang Hyundai'}</span> via DMS automation or cron scripts.
                     </p>
                   </div>
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200 self-start sm:self-auto">
                     <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                    Webhook Live
+                    Webhook Live ({activeDealership?.code || 'SMH-01'})
                   </span>
+                </div>
+
+                {/* Store Routing Method Selector */}
+                <div className="bg-slate-50 border border-slate-200/80 rounded-lg p-3 space-y-2">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <span className="text-xs font-semibold text-slate-700">Webhook Store Routing Format:</span>
+                    <div className="flex items-center bg-white border border-slate-200 rounded-lg p-0.5 text-[11px] font-medium">
+                      <button
+                        type="button"
+                        onClick={() => setUrlFormat('query')}
+                        className={`px-2.5 py-1 rounded-md transition ${
+                          urlFormat === 'query'
+                            ? 'bg-blue-600 text-white font-semibold shadow-xs'
+                            : 'text-slate-600 hover:text-slate-900'
+                        }`}
+                      >
+                        Query Param (?store={activeDealership?.code || 'CODE'})
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setUrlFormat('direct')}
+                        className={`px-2.5 py-1 rounded-md transition ${
+                          urlFormat === 'direct'
+                            ? 'bg-blue-600 text-white font-semibold shadow-xs'
+                            : 'text-slate-600 hover:text-slate-900'
+                        }`}
+                      >
+                        Direct Route (/{activeDealership?.code || 'CODE'}/ingest)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setUrlFormat('header')}
+                        className={`px-2.5 py-1 rounded-md transition ${
+                          urlFormat === 'header'
+                            ? 'bg-blue-600 text-white font-semibold shadow-xs'
+                            : 'text-slate-600 hover:text-slate-900'
+                        }`}
+                      >
+                        Header (x-store-code)
+                      </button>
+                    </div>
+                  </div>
+                  <p className="text-[11px] text-slate-500">
+                    Each dealership store has its own dedicated endpoint & secret API key. Reports are automatically isolated and tagged to <span className="font-semibold text-slate-700">{activeDealership?.name || 'South Morang Hyundai'}</span>.
+                  </p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Webhook URL Field */}
                   <div className="space-y-1.5">
                     <div className="flex items-center justify-between">
-                      <label className="text-xs font-bold text-slate-700">Inbound Webhook Endpoint URL</label>
+                      <label className="text-xs font-bold text-slate-700">
+                        {urlFormat === 'direct' ? 'Store-Specific Direct URL' : urlFormat === 'header' ? 'Standard Endpoint URL' : 'Store Query Endpoint URL'}
+                      </label>
                       <span className="text-[10px] text-slate-500 font-mono">POST / multipart/form-data</span>
                     </div>
                     <div className="flex gap-2">
                       <input
                         type="url"
-                        value={webhookUrl}
+                        value={getEffectiveWebhookUrl()}
                         readOnly
                         className="flex-1 text-xs px-3 py-2 border border-slate-300 rounded-lg font-mono bg-slate-50 text-slate-800 focus:outline-none select-all"
                       />
@@ -543,7 +655,7 @@ export default function SettingsPage() {
                   {/* API Secret Key Field */}
                   <div className="space-y-1.5">
                     <div className="flex items-center justify-between">
-                      <label className="text-xs font-bold text-slate-700">Dealership API Secret Key</label>
+                      <label className="text-xs font-bold text-slate-700">Store Secret API Key</label>
                       <span className="text-[10px] text-slate-500 font-mono">Header: x-api-key</span>
                     </div>
                     <div className="flex gap-2">
@@ -573,7 +685,7 @@ export default function SettingsPage() {
                       </Button>
                     </div>
                     <p className="text-[11px] text-slate-500">
-                      Scoped to <span className="font-semibold text-slate-700">South Morang Hyundai (SMH-01)</span>. Keep this key confidential.
+                      Scoped exclusively to <span className="font-semibold text-slate-700">{activeDealership?.name || 'South Morang Hyundai'} ({activeDealership?.code || 'SMH-01'})</span>.
                     </p>
                   </div>
                 </div>
@@ -588,7 +700,7 @@ export default function SettingsPage() {
                     onClick={handleSendPing}
                     icon={pingLoading ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Play className="w-3.5 h-3.5" />}
                   >
-                    {pingLoading ? 'Pinging Endpoint...' : 'Send Test Ping'}
+                    {pingLoading ? 'Pinging Endpoint...' : `Test Ping (${activeDealership?.code || 'SMH-01'})`}
                   </Button>
 
                   <Button
@@ -599,7 +711,7 @@ export default function SettingsPage() {
                     onClick={handleSendSamplePdf}
                     icon={sampleLoading ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <UploadCloud className="w-3.5 h-3.5 text-blue-600" />}
                   >
-                    {sampleLoading ? 'Ingesting Sample PDF (609 Rows)...' : 'Send Test PDF via Webhook'}
+                    {sampleLoading ? 'Ingesting Sample PDF...' : `Ingest Test PDF into ${activeDealership?.code || 'SMH-01'}`}
                   </Button>
 
                   <Button
@@ -642,7 +754,7 @@ export default function SettingsPage() {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2 text-blue-900 font-bold text-xs">
                         <CheckCircle2 className="w-4 h-4 text-blue-600" />
-                        Sample PDF Ingested Successfully via Webhook!
+                        Sample PDF Ingested Successfully into {sampleResult.dealershipName || activeDealership?.name || 'Dealership'}!
                       </div>
                       <Badge variant="success" size="sm">201 CREATED</Badge>
                     </div>
@@ -652,16 +764,16 @@ export default function SettingsPage() {
                         <span className="font-semibold text-slate-900 truncate block">{sampleResult.reportName}</span>
                       </div>
                       <div>
+                        <span className="text-slate-500 text-[10px] block">Target Store</span>
+                        <span className="font-bold text-blue-700">{sampleResult.dealershipName || activeDealership?.name} ({sampleResult.dealershipCode || activeDealership?.code})</span>
+                      </div>
+                      <div>
                         <span className="text-slate-500 text-[10px] block">Records Ingested</span>
-                        <span className="font-bold text-blue-700">{sampleResult.recordCount?.toLocaleString()}</span>
+                        <span className="font-bold text-slate-900">{sampleResult.recordCount?.toLocaleString()}</span>
                       </div>
                       <div>
                         <span className="text-slate-500 text-[10px] block">Tracked Revenue</span>
                         <span className="font-bold text-emerald-700">${sampleResult.totalRevenue?.toLocaleString()}</span>
-                      </div>
-                      <div>
-                        <span className="text-slate-500 text-[10px] block">Ingestion Date</span>
-                        <span className="font-semibold text-slate-700">Today ({new Date(sampleResult.ingestedAt).toLocaleTimeString()})</span>
                       </div>
                     </div>
                     <div className="flex justify-end">
@@ -679,11 +791,11 @@ export default function SettingsPage() {
 
               {/* Integration Code Snippets */}
               <div className="bg-slate-900 text-slate-200 rounded-xl p-5 shadow-sm space-y-3 border border-slate-800">
-                <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
                   <div className="flex items-center gap-2">
                     <Terminal className="w-4 h-4 text-blue-400" />
                     <span className="text-xs font-bold text-white uppercase tracking-wider">
-                      Webhook Ingestion Code Examples
+                      Webhook Ingestion Code Examples ({activeDealership?.name || 'South Morang Hyundai'})
                     </span>
                   </div>
                   <div className="flex items-center gap-1.5">
@@ -720,29 +832,41 @@ export default function SettingsPage() {
                 <div className="relative">
                   <pre className="text-xs font-mono text-emerald-400 bg-slate-950/70 p-3.5 rounded-lg overflow-x-auto leading-relaxed border border-slate-800/80">
                     {codeSnippetTab === 'curl' &&
-`curl -X POST ${webhookUrl} \\
+`# Option 1: Direct Store Route (Recommended)
+curl -X POST ${directWebhookUrl || `http://localhost:7000/api/webhooks/${activeDealership?.code || 'SMH-01'}/ingest`} \\
   -H "x-api-key: ${apiKey}" \\
-  -F "file=@HY_Closed_RO.pdf"`}
+  -F "file=@${(activeDealership?.name || 'South_Morang_Hyundai').replace(/\s+/g, '_')}_Closed_RO.pdf"
+
+# Option 2: Endpoint with Query Parameter
+curl -X POST "${webhookUrl || `http://localhost:7000/api/webhooks/ingest?store=${activeDealership?.code || 'SMH-01'}`}" \\
+  -H "x-api-key: ${apiKey}" \\
+  -F "file=@Closed_RO.pdf"`}
                     {codeSnippetTab === 'python' &&
 `import requests
 
-url = "${webhookUrl}"
-headers = {"x-api-key": "${apiKey}"}
+# Store: ${activeDealership?.name || 'South Morang Hyundai'} (${activeDealership?.code || 'SMH-01'})
+url = "${directWebhookUrl || `http://localhost:7000/api/webhooks/${activeDealership?.code || 'SMH-01'}/ingest`}"
+headers = {
+    "x-api-key": "${apiKey}",
+    "x-store-code": "${activeDealership?.code || 'SMH-01'}"
+}
 
-with open("HY_Closed_RO.pdf", "rb") as f:
+with open("Closed_RO.pdf", "rb") as f:
     response = requests.post(url, headers=headers, files={"file": f})
     print(response.json())`}
                     {codeSnippetTab === 'node' &&
 `const fs = require('fs');
 const FormData = require('form-data');
 
+// Store: ${activeDealership?.name || 'South Morang Hyundai'} (${activeDealership?.code || 'SMH-01'})
 const form = new FormData();
-form.append('file', fs.createReadStream('HY_Closed_RO.pdf'));
+form.append('file', fs.createReadStream('Closed_RO.pdf'));
 
-fetch('${webhookUrl}', {
+fetch('${directWebhookUrl || `http://localhost:7000/api/webhooks/${activeDealership?.code || 'SMH-01'}/ingest`}', {
   method: 'POST',
   headers: {
     'x-api-key': '${apiKey}',
+    'x-store-code': '${activeDealership?.code || 'SMH-01'}',
     ...form.getHeaders()
   },
   body: form
@@ -753,10 +877,10 @@ fetch('${webhookUrl}', {
                     onClick={() => {
                       const snippet =
                         codeSnippetTab === 'curl'
-                          ? `curl -X POST ${webhookUrl} \\\n  -H "x-api-key: ${apiKey}" \\\n  -F "file=@HY_Closed_RO.pdf"`
+                          ? `curl -X POST "${directWebhookUrl || getEffectiveWebhookUrl()}" \\\n  -H "x-api-key: ${apiKey}" \\\n  -F "file=@Closed_RO.pdf"`
                           : codeSnippetTab === 'python'
-                          ? `import requests\n\nurl = "${webhookUrl}"\nheaders = {"x-api-key": "${apiKey}"}\nwith open("HY_Closed_RO.pdf", "rb") as f:\n    response = requests.post(url, headers=headers, files={"file": f})\n    print(response.json())`
-                          : `const fs = require('fs');\nconst FormData = require('form-data');\nconst form = new FormData();\nform.append('file', fs.createReadStream('HY_Closed_RO.pdf'));\nfetch('${webhookUrl}', { method: 'POST', headers: { 'x-api-key': '${apiKey}', ...form.getHeaders() }, body: form }).then(r => r.json()).then(console.log);`;
+                          ? `import requests\n\nurl = "${directWebhookUrl || getEffectiveWebhookUrl()}"\nheaders = {"x-api-key": "${apiKey}", "x-store-code": "${activeDealership?.code || 'SMH-01'}"}\nwith open("Closed_RO.pdf", "rb") as f:\n    response = requests.post(url, headers=headers, files={"file": f})\n    print(response.json())`
+                          : `const fs = require('fs');\nconst FormData = require('form-data');\nconst form = new FormData();\nform.append('file', fs.createReadStream('Closed_RO.pdf'));\nfetch('${directWebhookUrl || getEffectiveWebhookUrl()}', { method: 'POST', headers: { 'x-api-key': '${apiKey}', 'x-store-code': '${activeDealership?.code || 'SMH-01'}', ...form.getHeaders() }, body: form }).then(r => r.json()).then(console.log);`;
                       copyCodeSnippet(snippet);
                     }}
                     className="absolute top-2.5 right-2.5 px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 text-[10px] rounded flex items-center gap-1 transition"
@@ -769,7 +893,7 @@ fetch('${webhookUrl}', {
 
               {/* Inbound Webhook Activity & Delivery Log Table */}
               <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
-                <div className="p-4 border-b border-slate-100 flex items-center justify-between">
+                <div className="p-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div className="flex items-center gap-2">
                     <Clock className="w-4 h-4 text-slate-600" />
                     <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
@@ -777,12 +901,38 @@ fetch('${webhookUrl}', {
                     </h4>
                     <Badge variant="default" size="sm">{logs.length}</Badge>
                   </div>
-                  <span className="text-[11px] text-slate-500">Live delivery history</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] text-slate-500 font-medium">Filter Store:</span>
+                    <div className="inline-flex rounded-lg border border-slate-200 p-0.5 bg-slate-50 text-[11px]">
+                      <button
+                        type="button"
+                        onClick={() => setLogsFilter('current')}
+                        className={`px-2.5 py-1 rounded-md transition font-medium ${
+                          logsFilter === 'current'
+                            ? 'bg-white shadow-xs text-blue-700 font-semibold'
+                            : 'text-slate-600 hover:text-slate-900'
+                        }`}
+                      >
+                        {activeDealership?.code || 'Active Store'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setLogsFilter('all')}
+                        className={`px-2.5 py-1 rounded-md transition font-medium ${
+                          logsFilter === 'all'
+                            ? 'bg-white shadow-xs text-blue-700 font-semibold'
+                            : 'text-slate-600 hover:text-slate-900'
+                        }`}
+                      >
+                        All Stores
+                      </button>
+                    </div>
+                  </div>
                 </div>
 
                 {logs.length === 0 ? (
                   <div className="p-8 text-center text-slate-400 text-xs">
-                    No webhook calls recorded yet. Click "Send Test Ping" or "Send Test PDF via Webhook" to initiate events.
+                    No webhook calls recorded for {logsFilter === 'current' ? activeDealership?.name || 'this store' : 'any store'}. Click "Test Ping" or "Ingest Test PDF" above to initiate events.
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
@@ -790,6 +940,7 @@ fetch('${webhookUrl}', {
                       <thead className="bg-slate-50 text-[11px] font-bold text-slate-500 uppercase tracking-wider border-b border-slate-200">
                         <tr>
                           <th className="px-4 py-3">Timestamp / Date</th>
+                          <th className="px-4 py-3">Dealership Store</th>
                           <th className="px-4 py-3">Event / File</th>
                           <th className="px-4 py-3">Type</th>
                           <th className="px-4 py-3 text-right">Records</th>
@@ -799,58 +950,72 @@ fetch('${webhookUrl}', {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100 font-normal">
-                        {logs.map((log: any) => (
-                          <tr key={log._id} className="hover:bg-slate-50/70 transition">
-                            <td className="px-4 py-3 text-slate-500 font-mono text-[11px] whitespace-nowrap">
-                              {new Date(log.createdAt).toLocaleString('en-US', {
-                                month: 'short',
-                                day: 'numeric',
-                                hour: '2-digit',
-                                minute: '2-digit',
-                                second: '2-digit',
-                              })}
-                            </td>
-                            <td className="px-4 py-3 font-medium text-slate-900 max-w-xs truncate">
-                              {log.fileName || log.message || log.eventType}
-                            </td>
-                            <td className="px-4 py-3">
-                              <Badge
-                                variant={log.fileType === 'pdf' ? 'default' : 'neutral'}
-                                size="sm"
-                                className="uppercase font-mono text-[10px]"
-                              >
-                                {log.fileType || log.eventType}
-                              </Badge>
-                            </td>
-                            <td className="px-4 py-3 text-right font-mono font-medium text-slate-700">
-                              {log.recordCount ? log.recordCount.toLocaleString() : '—'}
-                            </td>
-                            <td className="px-4 py-3 text-right font-mono font-semibold text-emerald-700">
-                              {log.totalRevenue ? `$${log.totalRevenue.toLocaleString()}` : '—'}
-                            </td>
-                            <td className="px-4 py-3 text-center">
-                              <Badge
-                                variant={log.status === 'SUCCESS' ? 'success' : log.status === 'PING' ? 'outline' : 'error'}
-                                size="sm"
-                              >
-                                {log.responseStatus} {log.status}
-                              </Badge>
-                            </td>
-                            <td className="px-4 py-3 text-right whitespace-nowrap">
-                              {log.reportId?._id || (typeof log.reportId === 'string' && log.reportId) ? (
-                                <Link
-                                  href={`/reports/${log.reportId?._id || log.reportId}`}
-                                  className="inline-flex items-center gap-1 text-[11px] text-blue-600 hover:text-blue-800 font-semibold"
+                        {logs.map((log: any) => {
+                          const storeCode = log.dealershipId?.code || log.payloadSummary?.code || activeDealership?.code || 'SMH-01';
+                          const storeName = log.dealershipId?.name || log.payloadSummary?.dealership || activeDealership?.name || 'Dealership';
+                          return (
+                            <tr key={log._id} className="hover:bg-slate-50/70 transition">
+                              <td className="px-4 py-3 text-slate-500 font-mono text-[11px] whitespace-nowrap">
+                                {new Date(log.createdAt).toLocaleString('en-US', {
+                                  month: 'short',
+                                  day: 'numeric',
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                  second: '2-digit',
+                                })}
+                              </td>
+                              <td className="px-4 py-3 whitespace-nowrap">
+                                <div className="flex items-center gap-1.5">
+                                  <Badge variant="outline" size="sm" className="font-mono text-[10px] font-bold">
+                                    {storeCode}
+                                  </Badge>
+                                  <span className="text-slate-800 font-medium text-[11px] truncate max-w-[130px]" title={storeName}>
+                                    {storeName}
+                                  </span>
+                                </div>
+                              </td>
+                              <td className="px-4 py-3 font-medium text-slate-900 max-w-xs truncate">
+                                {log.fileName || log.message || log.eventType}
+                              </td>
+                              <td className="px-4 py-3">
+                                <Badge
+                                  variant={log.fileType === 'pdf' ? 'default' : 'neutral'}
+                                  size="sm"
+                                  className="uppercase font-mono text-[10px]"
                                 >
-                                  View Report
-                                  <ArrowUpRight className="w-3 h-3" />
-                                </Link>
-                              ) : (
-                                <span className="text-slate-400 text-[11px]">—</span>
-                              )}
-                            </td>
-                          </tr>
-                        ))}
+                                  {log.fileType || log.eventType}
+                                </Badge>
+                              </td>
+                              <td className="px-4 py-3 text-right font-mono font-medium text-slate-700">
+                                {log.recordCount ? log.recordCount.toLocaleString() : '—'}
+                              </td>
+                              <td className="px-4 py-3 text-right font-mono font-semibold text-emerald-700">
+                                {log.totalRevenue ? `$${log.totalRevenue.toLocaleString()}` : '—'}
+                              </td>
+                              <td className="px-4 py-3 text-center">
+                                <Badge
+                                  variant={log.status === 'SUCCESS' ? 'success' : log.status === 'PING' ? 'outline' : 'error'}
+                                  size="sm"
+                                >
+                                  {log.responseStatus} {log.status}
+                                </Badge>
+                              </td>
+                              <td className="px-4 py-3 text-right whitespace-nowrap">
+                                {log.reportId?._id || (typeof log.reportId === 'string' && log.reportId) ? (
+                                  <Link
+                                    href={`/reports/${log.reportId?._id || log.reportId}`}
+                                    className="inline-flex items-center gap-1 text-[11px] text-blue-600 hover:text-blue-800 font-semibold"
+                                  >
+                                    View Report
+                                    <ArrowUpRight className="w-3 h-3" />
+                                  </Link>
+                                ) : (
+                                  <span className="text-slate-400 text-[11px]">—</span>
+                                )}
+                              </td>
+                            </tr>
+                          );
+                        })}
                       </tbody>
                     </table>
                   </div>
