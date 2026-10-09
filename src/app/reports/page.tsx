@@ -38,8 +38,6 @@ export default function ReportsPage() {
   const [totalTrackedRevenue, setTotalTrackedRevenue] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [dateFromFilter, setDateFromFilter] = useState('');
-  const [dateToFilter, setDateToFilter] = useState('');
 
   // Date helpers for Today and Yesterday
   const getTodayString = () => {
@@ -62,8 +60,25 @@ export default function ReportsPage() {
   const todayStr = useMemo(() => getTodayString(), []);
   const yesterdayStr = useMemo(() => getYesterdayString(), []);
 
+  // Default date filter to Today by default whenever entering or clicking Reports
+  const [dateFromFilter, setDateFromFilter] = useState(() => getTodayString());
+  const [dateToFilter, setDateToFilter] = useState(() => getTodayString());
+
   const isTodayActive = Boolean(dateFromFilter && dateFromFilter === todayStr && dateToFilter === todayStr);
   const isYesterdayActive = Boolean(dateFromFilter && dateFromFilter === yesterdayStr && dateToFilter === yesterdayStr);
+
+  // Listen for reset events when user clicks "Reports" navigation link
+  useEffect(() => {
+    const handleResetToday = () => {
+      const today = getTodayString();
+      setDateFromFilter(today);
+      setDateToFilter(today);
+      setSearchTerm('');
+    };
+
+    window.addEventListener('reset-reports-today', handleResetToday);
+    return () => window.removeEventListener('reset-reports-today', handleResetToday);
+  }, []);
 
   const [quarterYear, setQuarterYear] = useState<number>(() => new Date().getFullYear());
 
@@ -500,11 +515,26 @@ export default function ReportsPage() {
                   <tr>
                     <td colSpan={8} className="py-12 text-center">
                       <FileSpreadsheet className="w-10 h-10 text-slate-300 mx-auto mb-2" strokeWidth={1.5} />
-                      <div className="text-sm font-medium text-slate-700">No reports found</div>
-                      <p className="text-xs text-slate-400 mt-0.5">
-                        Upload single reports or use Batch Upload to process multiple PDFs together
+                      <div className="text-sm font-medium text-slate-700">
+                        {isTodayActive
+                          ? `No reports found for Today (${todayStr})`
+                          : 'No reports found'}
+                      </div>
+                      <p className="text-xs text-slate-400 mt-0.5 max-w-md mx-auto">
+                        {isTodayActive
+                          ? `No reports have been received yet today for ${activeDealership?.name || 'this store'}. You can view all historical reports or upload a new one.`
+                          : 'Upload single reports or use Batch Upload to process multiple PDFs together'}
                       </p>
-                      <div className="mt-3 flex items-center justify-center gap-2">
+                      <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+                        {isTodayActive && (
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => handleQuickDatePreset('all')}
+                          >
+                            View All Reports
+                          </Button>
+                        )}
                         <Button size="sm" onClick={() => setIsBatchModalOpen(true)} icon={<Layers className="w-3.5 h-3.5" strokeWidth={1.75} />}>
                           Batch Upload PDFs
                         </Button>

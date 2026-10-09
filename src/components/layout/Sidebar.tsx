@@ -167,6 +167,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ isMobile, onClose }) => {
               key={item.name}
               href={item.href}
               onClick={() => {
+                if (item.href === '/reports' && typeof window !== 'undefined') {
+                  window.dispatchEvent(new CustomEvent('reset-reports-today'));
+                }
                 if (onClose) onClose();
               }}
               className={cn(
