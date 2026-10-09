@@ -130,7 +130,7 @@ export default function ReportsPage() {
   // Delete all reports modal
   const [isDeleteAllModalOpen, setIsDeleteAllModalOpen] = useState(false);
   const [isDeletingAll, setIsDeletingAll] = useState(false);
-  const [deleteAllScope, setDeleteAllScope] = useState<'current' | 'all'>('current');
+  const [deleteAllScope, setDeleteAllScope] = useState<'filtered' | 'store_all' | 'platform_all'>('filtered');
   const [deleteAllConfirmText, setDeleteAllConfirmText] = useState('');
 
   const fetchReports = async () => {
@@ -195,16 +195,26 @@ export default function ReportsPage() {
     setIsDeletingAll(true);
     try {
       const params = new URLSearchParams();
-      if (deleteAllScope === 'current' && activeDealership?._id) {
-        params.append('dealershipId', activeDealership._id);
+      if (deleteAllScope === 'filtered') {
+        if (activeDealership?._id) {
+          params.append('dealershipId', activeDealership._id);
+        }
+        if (dateFromFilter) params.append('dateFrom', dateFromFilter);
+        if (dateToFilter) params.append('dateTo', dateToFilter);
+      } else if (deleteAllScope === 'store_all') {
+        if (activeDealership?._id) {
+          params.append('dealershipId', activeDealership._id);
+        }
       }
+      // If platform_all, omit dealershipId and dates to purge platform-wide
+
       await api.delete(`/reports/all?${params.toString()}`);
       setIsDeleteAllModalOpen(false);
       setDeleteAllConfirmText('');
       await fetchReports();
     } catch (err: any) {
       console.error('Delete all failed', err);
-      alert(err.response?.data?.message || 'Failed to delete all reports');
+      alert(err.response?.data?.message || 'Failed to delete reports');
     } finally {
       setIsDeletingAll(false);
     }
@@ -295,7 +305,7 @@ export default function ReportsPage() {
               variant="outline"
               size="sm"
               onClick={() => {
-                setDeleteAllScope('current');
+                setDeleteAllScope(dateFromFilter || dateToFilter ? 'filtered' : 'store_all');
                 setDeleteAllConfirmText('');
                 setIsDeleteAllModalOpen(true);
               }}
@@ -802,7 +812,7 @@ export default function ReportsPage() {
             setDeleteAllConfirmText('');
           }
         }}
-        title="Delete All Reports"
+        title="Delete Reports"
       >
         <div className="space-y-4 text-xs">
           <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200/90 text-rose-800 flex items-start gap-3">
@@ -812,7 +822,7 @@ export default function ReportsPage() {
             <div className="space-y-1">
               <div className="font-bold text-xs text-rose-900">Irreversible Action</div>
               <p className="text-[11px] text-rose-700 leading-relaxed">
-                This action will permanently delete reports and completely remove all associated closed Repair Order (RO) records, validation logs, and coverage metrics from the database.
+                This will permanently delete reports and completely remove all associated closed Repair Order (RO) records, validation logs, and coverage metrics from the database.
               </p>
             </div>
           </div>
@@ -821,39 +831,86 @@ export default function ReportsPage() {
             <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider">
               Select Deletion Scope
             </label>
-            <div className="space-y-1.5">
-              <label className="flex items-start gap-2.5 p-2.5 rounded-lg border border-slate-200 hover:bg-slate-50 cursor-pointer transition">
+            <div className="space-y-2">
+              {(dateFromFilter || dateToFilter) && (
+                <label
+                  className={`flex items-start gap-2.5 p-3 rounded-lg border cursor-pointer transition ${
+                    deleteAllScope === 'filtered'
+                      ? 'border-rose-400 bg-rose-50/40 shadow-xs'
+                      : 'border-slate-200 hover:bg-slate-50'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="deleteScope"
+                    checked={deleteAllScope === 'filtered'}
+                    onChange={() => setDeleteAllScope('filtered')}
+                    className="mt-0.5 text-rose-600 focus:ring-rose-500"
+                  />
+                  <div>
+                    <div className="font-semibold text-slate-900 flex items-center gap-1.5">
+                      <span>
+                        {isTodayActive
+                          ? "Today's Reports Only"
+                          : isYesterdayActive
+                          ? "Yesterday's Reports Only"
+                          : `Filtered Date Range (${dateFromFilter} ~ ${dateToFilter})`}
+                      </span>
+                      <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-700">
+                        {reports.length} {reports.length === 1 ? 'Report' : 'Reports'}
+                      </span>
+                    </div>
+                    <div className="text-[11px] text-slate-500 mt-0.5">
+                      Only deletes the {reports.length} report(s) matching your active date filter for {activeDealership?.name || 'this store'}. Historical reports remain safe and untouched.
+                    </div>
+                  </div>
+                </label>
+              )}
+
+              <label
+                className={`flex items-start gap-2.5 p-3 rounded-lg border cursor-pointer transition ${
+                  deleteAllScope === 'store_all'
+                    ? 'border-rose-400 bg-rose-50/40 shadow-xs'
+                    : 'border-slate-200 hover:bg-slate-50'
+                }`}
+              >
                 <input
                   type="radio"
                   name="deleteScope"
-                  checked={deleteAllScope === 'current'}
-                  onChange={() => setDeleteAllScope('current')}
+                  checked={deleteAllScope === 'store_all'}
+                  onChange={() => setDeleteAllScope('store_all')}
                   className="mt-0.5 text-rose-600 focus:ring-rose-500"
                 />
                 <div>
                   <div className="font-semibold text-slate-900">
-                    Current Store: {activeDealership?.name || 'Active Dealership'}
+                    All Time: {activeDealership?.name || 'Current Dealership'}
                   </div>
-                  <div className="text-[11px] text-slate-500">
-                    Delete all reports belonging to this active store ({reports.length} reports currently visible).
+                  <div className="text-[11px] text-slate-500 mt-0.5">
+                    Deletes <strong className="text-slate-700 font-semibold">every report across all dates</strong> (past, present, and future) for this specific dealership.
                   </div>
                 </div>
               </label>
 
-              <label className="flex items-start gap-2.5 p-2.5 rounded-lg border border-slate-200 hover:bg-slate-50 cursor-pointer transition">
+              <label
+                className={`flex items-start gap-2.5 p-3 rounded-lg border cursor-pointer transition ${
+                  deleteAllScope === 'platform_all'
+                    ? 'border-rose-400 bg-rose-50/40 shadow-xs'
+                    : 'border-slate-200 hover:bg-slate-50'
+                }`}
+              >
                 <input
                   type="radio"
                   name="deleteScope"
-                  checked={deleteAllScope === 'all'}
-                  onChange={() => setDeleteAllScope('all')}
+                  checked={deleteAllScope === 'platform_all'}
+                  onChange={() => setDeleteAllScope('platform_all')}
                   className="mt-0.5 text-rose-600 focus:ring-rose-500"
                 />
                 <div>
                   <div className="font-semibold text-rose-900">
-                    All Dealerships (Global Clean Slate)
+                    All Time Across All Dealerships (Global Clean Slate)
                   </div>
-                  <div className="text-[11px] text-slate-500">
-                    Delete every single report across all stores in the platform.
+                  <div className="text-[11px] text-slate-500 mt-0.5">
+                    Permanently purges every single report across all stores in the entire platform.
                   </div>
                 </div>
               </label>
@@ -893,7 +950,11 @@ export default function ReportsPage() {
               isLoading={isDeletingAll}
               icon={<Trash2 className="w-3.5 h-3.5 mr-1" strokeWidth={1.75} />}
             >
-              Confirm Delete All
+              {deleteAllScope === 'filtered'
+                ? `Confirm Delete (${reports.length} Reports)`
+                : deleteAllScope === 'store_all'
+                ? `Delete All Time (${activeDealership?.name || 'Store'})`
+                : 'Confirm Global Purge'}
             </Button>
           </div>
         </div>
