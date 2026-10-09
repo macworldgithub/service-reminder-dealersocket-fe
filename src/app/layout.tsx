@@ -4,7 +4,7 @@ import { AuthProvider } from '@/lib/authContext';
 import { ReactQueryProvider } from '@/lib/queryClient';
 
 export const metadata: Metadata = {
-  title: 'ServicePulse | Campaign Intelligence & Revenue Platform',
+  title: 'Neximet | Campaign Intelligence & Revenue Platform',
   description: 'Automotive campaign intelligence, DealerSocket Closed RO ingestion, and service revenue analytics.',
 };
 

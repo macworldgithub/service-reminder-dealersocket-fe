@@ -59,8 +59,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ isMobile, onClose }) => {
           <DealerSocketLogo size="md" withGlow />
           <div>
             <div className="text-base font-bold text-white tracking-tight leading-none group-hover:text-blue-300 transition-colors flex items-center">
-              <span>Service</span>
-              <span className="text-blue-400">Pulse</span>
+              <span>Nexi</span>
+              <span className="text-blue-400">met</span>
             </div>
             <div className="text-[10px] text-slate-400 font-semibold tracking-wider uppercase mt-1">
               Campaign Intelligence

@@ -49,7 +49,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
               <Loader2 className="w-4 h-4 text-blue-600 animate-spin" strokeWidth={2.5} />
             </div>
           </div>
-          <span className="text-xs font-semibold text-slate-600 tracking-wide">Loading ServicePulse...</span>
+          <span className="text-xs font-semibold text-slate-600 tracking-wide">Loading Neximet...</span>
         </div>
       </div>
     );

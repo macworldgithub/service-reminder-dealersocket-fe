@@ -49,8 +49,8 @@ export default function LoginPage() {
         <div className="mb-3">
           <DealerSocketLogo size="xl" withGlow />
         </div>
-        <h2 className="text-2xl font-bold tracking-tight text-slate-900 flex items-center justify-center gap-1.5">
-          <span>Service</span><span className="text-blue-600">Pulse</span>
+        <h2 className="text-2xl font-bold tracking-tight text-slate-900 flex items-center justify-center gap-0.5">
+          <span>Nexi</span><span className="text-blue-600">met</span>
         </h2>
         <p className="mt-1 text-xs text-slate-500">
           Automotive Campaign Intelligence &amp; Service Revenue Platform
