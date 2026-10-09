@@ -29,12 +29,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (res.data?.success && Array.isArray(res.data.data)) {
         setDealerships(res.data.data);
         const storedDealershipId = localStorage.getItem('activeDealershipId');
-        const found = res.data.data.find((d: Dealership) => d._id === storedDealershipId);
+        const found =
+          res.data.data.find((d: Dealership) => d._id === storedDealershipId) ||
+          res.data.data.find((d: Dealership) => d.code === 'SMH-01') ||
+          res.data.data[0];
+
         if (found) {
           setActiveDealershipState(found);
-        } else if (res.data.data.length > 0) {
-          setActiveDealershipState(res.data.data[0]);
-          localStorage.setItem('activeDealershipId', res.data.data[0]._id);
+          localStorage.setItem('activeDealershipId', found._id);
         }
       }
     } catch (err) {

@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
@@ -14,6 +14,8 @@ import {
   Building2,
   User,
   Shield,
+  ChevronDown,
+  Check,
 } from 'lucide-react';
 import { useAuth } from '@/lib/authContext';
 import { cn } from '@/lib/utils';
@@ -26,7 +28,19 @@ interface SidebarProps {
 
 export const Sidebar: React.FC<SidebarProps> = ({ isMobile, onClose }) => {
   const pathname = usePathname();
-  const { user, activeDealership, logout } = useAuth();
+  const { user, activeDealership, dealerships, setActiveDealership, logout } = useAuth();
+  const [isStoreDropdownOpen, setIsStoreDropdownOpen] = useState(false);
+  const storeDropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (storeDropdownRef.current && !storeDropdownRef.current.contains(event.target as Node)) {
+        setIsStoreDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const navigation = [
     { name: 'Dashboard', href: '/', icon: LayoutDashboard },
@@ -55,8 +69,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ isMobile, onClose }) => {
         </Link>
       </div>
 
-      {/* Active Dealership */}
-      <div className="p-3 border-b border-slate-800/80">
+      {/* Active Dealership Switcher */}
+      <div className="p-3 border-b border-slate-800/80 relative" ref={storeDropdownRef}>
         <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1 mb-2 flex items-center justify-between">
           <span className="flex items-center gap-1.5">Active Store</span>
           <span className="text-[9px] text-emerald-400 font-semibold bg-emerald-950/70 border border-emerald-800/50 px-1.5 py-0.5 rounded-full flex items-center gap-1">
@@ -64,29 +78,80 @@ export const Sidebar: React.FC<SidebarProps> = ({ isMobile, onClose }) => {
             LIVE
           </span>
         </div>
-        <div className="group rounded-xl bg-gradient-to-b from-slate-800/80 to-slate-900/90 border border-slate-700/70 hover:border-blue-500/40 p-2.5 transition-all shadow-sm">
+        <button
+          type="button"
+          onClick={() => setIsStoreDropdownOpen(!isStoreDropdownOpen)}
+          className="w-full text-left group rounded-xl bg-gradient-to-b from-slate-800/80 to-slate-900/90 border border-slate-700/70 hover:border-blue-500/50 p-2.5 transition-all shadow-sm cursor-pointer focus:outline-none"
+          title="Click to switch store"
+        >
           <div className="flex items-start gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600/25 to-indigo-600/30 border border-blue-500/30 flex items-center justify-center shrink-0 mt-0.5 text-blue-400 font-bold text-xs tracking-wider shadow-inner">
               {activeDealership?.code ? activeDealership.code.replace(/[^A-Za-z]/g, '').slice(0, 3) || 'SMH' : 'SMH'}
             </div>
             <div className="min-w-0 flex-1">
               <div
-                className="text-xs font-semibold text-white tracking-tight leading-snug group-hover:text-blue-200 transition-colors break-words"
+                className="text-xs font-semibold text-white tracking-tight leading-snug group-hover:text-blue-200 transition-colors break-words flex items-center justify-between"
                 title={activeDealership?.name || 'South Morang Hyundai'}
               >
-                {activeDealership?.name || 'South Morang Hyundai'}
+                <span className="truncate">{activeDealership?.name || 'South Morang Hyundai'}</span>
+                <ChevronDown
+                  className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 shrink-0 ml-1 ${
+                    isStoreDropdownOpen ? 'rotate-180 text-blue-400' : ''
+                  }`}
+                />
               </div>
               <div className="mt-1 flex items-center gap-1.5 flex-wrap">
                 <span className="inline-flex items-center text-[10px] font-mono font-semibold text-blue-300 bg-blue-950/80 border border-blue-800/60 px-1.5 py-0.5 rounded tracking-wide shrink-0 whitespace-nowrap">
                   {activeDealership?.code || 'SMH-01'}
                 </span>
                 <span className="text-[10px] text-slate-400 truncate">
-                  DealerSocket Feed
+                  Click to switch
                 </span>
               </div>
             </div>
           </div>
-        </div>
+        </button>
+
+        {isStoreDropdownOpen && (
+          <div className="absolute left-3 right-3 top-full mt-1.5 bg-slate-900/95 backdrop-blur-md border border-slate-700/90 rounded-xl shadow-2xl p-1 z-50 animate-in fade-in zoom-in-95 duration-100">
+            <div className="px-2.5 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-800 flex items-center justify-between">
+              <span>Available Stores</span>
+              <span className="text-slate-400">{dealerships.length}</span>
+            </div>
+            <div className="max-h-56 overflow-y-auto py-1 space-y-0.5">
+              {dealerships.map((d) => {
+                const isSelected = activeDealership?._id === d._id;
+                return (
+                  <button
+                    key={d._id}
+                    type="button"
+                    onClick={() => {
+                      setActiveDealership(d);
+                      setIsStoreDropdownOpen(false);
+                    }}
+                    className={`w-full text-left px-2.5 py-1.5 rounded-lg text-xs flex items-center justify-between transition-colors cursor-pointer ${
+                      isSelected
+                        ? 'bg-blue-600/20 text-blue-400 font-semibold border border-blue-500/30'
+                        : 'text-slate-300 hover:bg-slate-800/80 hover:text-white'
+                    }`}
+                  >
+                    <div className="min-w-0 pr-2">
+                      <div className="truncate font-medium">{d.name}</div>
+                      {d.code && (
+                        <div className="text-[10px] text-slate-400 font-mono">
+                          {d.code}
+                        </div>
+                      )}
+                    </div>
+                    {isSelected && (
+                      <Check className="w-3.5 h-3.5 text-blue-400 shrink-0" strokeWidth={2} />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Navigation Links */}
