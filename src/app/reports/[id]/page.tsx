@@ -32,7 +32,15 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import { Button } from '@/components/common/Button';
 import { Badge } from '@/components/common/Badge';
 import { RecordDataGrid } from '@/components/reports/RecordDataGrid';
-import { LivePdfViewer } from '@/components/reports/LivePdfViewer';
+import dynamic from 'next/dynamic';
+const LivePdfViewer = dynamic(() => import('@/components/reports/LivePdfViewer').then((mod) => mod.LivePdfViewer), {
+  ssr: false,
+  loading: () => (
+    <div className="p-8 text-center text-xs text-slate-500 bg-white rounded-xl border border-slate-200">
+      Loading PDF preview engine...
+    </div>
+  ),
+});
 import { api } from '@/lib/api';
 import { Report, ReportRecord, AuditLog, RevenueLookupResult } from '@/lib/types';
 import { formatCurrency, formatDate } from '@/lib/utils';

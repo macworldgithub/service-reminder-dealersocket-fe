@@ -21,7 +21,11 @@ import {
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Button } from '@/components/common/Button';
 import { Badge } from '@/components/common/Badge';
-import { BatchUploadModal } from '@/components/common/BatchUploadModal';
+import dynamic from 'next/dynamic';
+const BatchUploadModal = dynamic(
+  () => import('@/components/common/BatchUploadModal').then((mod) => mod.BatchUploadModal),
+  { ssr: false }
+);
 import { api } from '@/lib/api';
 import { downloadAuthenticatedFile } from '@/lib/download';
 import { useAuth } from '@/lib/authContext';

@@ -11,7 +11,15 @@ export const api = axios.create({
   },
 });
 
-// Request interceptor to attach bearer token
+// In-memory GET response cache to make tab navigation and repeated calls instant
+const getCache = new Map<string, { data: any; status: number; headers: any; timestamp: number }>();
+const CACHE_TTL_MS = 15000; // 15 seconds for general data
+
+export const clearApiCache = () => {
+  getCache.clear();
+};
+
+// Request interceptor to attach bearer token & serve from in-memory cache
 api.interceptors.request.use((config) => {
   if (typeof window !== 'undefined') {
     const token = localStorage.getItem('accessToken');
@@ -19,10 +27,40 @@ api.interceptors.request.use((config) => {
       config.headers.Authorization = `Bearer ${token}`;
     }
   }
+
+  const method = (config.method || 'get').toLowerCase();
+
+  // Invalidate cache immediately on any mutating operation
+  if (method !== 'get') {
+    getCache.clear();
+    return config;
+  }
+
+  // Check GET cache
+  const isNoCache = config.headers?.['Cache-Control'] === 'no-cache';
+  if (!isNoCache) {
+    const paramsString = config.params ? new URLSearchParams(config.params).toString() : '';
+    const cacheKey = `${config.baseURL || ''}${config.url || ''}${paramsString ? `?${paramsString}` : ''}`;
+    const cached = getCache.get(cacheKey);
+    const ttl = config.url?.includes('/dealerships') ? 60000 : CACHE_TTL_MS;
+
+    if (cached && Date.now() - cached.timestamp < ttl) {
+      config.adapter = () =>
+        Promise.resolve({
+          data: cached.data,
+          status: cached.status,
+          statusText: 'OK',
+          headers: cached.headers,
+          config,
+          request: {},
+        });
+    }
+  }
+
   return config;
 });
 
-// Response interceptor to handle token expiry and refresh
+// Response interceptor to handle caching & token expiry/refresh
 let isRefreshing = false;
 let failedQueue: Array<{ resolve: (token: string) => void; reject: (err: any) => void }> = [];
 
@@ -38,7 +76,24 @@ const processQueue = (error: any, token: string | null = null) => {
 };
 
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // Store successful GET responses in cache
+    const method = (response.config.method || 'get').toLowerCase();
+    if (method === 'get' && response.status === 200) {
+      const isNoCache = response.config.headers?.['Cache-Control'] === 'no-cache';
+      if (!isNoCache) {
+        const paramsString = response.config.params ? new URLSearchParams(response.config.params).toString() : '';
+        const cacheKey = `${response.config.baseURL || ''}${response.config.url || ''}${paramsString ? `?${paramsString}` : ''}`;
+        getCache.set(cacheKey, {
+          data: response.data,
+          status: response.status,
+          headers: response.headers,
+          timestamp: Date.now(),
+        });
+      }
+    }
+    return response;
+  },
   async (error) => {
     const originalRequest = error.config;
 

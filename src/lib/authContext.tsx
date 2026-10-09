@@ -18,25 +18,73 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [dealerships, setDealerships] = useState<Dealership[]>([]);
-  const [activeDealership, setActiveDealershipState] = useState<Dealership | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [user, setUser] = useState<User | null>(() => {
+    if (typeof window === 'undefined') return null;
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      try {
+        return JSON.parse(storedUser);
+      } catch {}
+    }
+    return null;
+  });
+
+  const [dealerships, setDealerships] = useState<Dealership[]>(() => {
+    if (typeof window === 'undefined') return [];
+    const stored = localStorage.getItem('dealerships');
+    if (stored) {
+      try {
+        return JSON.parse(stored);
+      } catch {}
+    }
+    return [];
+  });
+
+  const [activeDealership, setActiveDealershipState] = useState<Dealership | null>(() => {
+    if (typeof window === 'undefined') return null;
+    const storedActive = localStorage.getItem('activeDealership');
+    if (storedActive) {
+      try {
+        return JSON.parse(storedActive);
+      } catch {}
+    }
+    const storedDealershipId = localStorage.getItem('activeDealershipId');
+    const storedList = localStorage.getItem('dealerships');
+    if (storedDealershipId && storedList) {
+      try {
+        const list = JSON.parse(storedList);
+        return list.find((d: any) => d._id === storedDealershipId) || null;
+      } catch {}
+    }
+    return null;
+  });
+
+  // If user and token already exist in localStorage, start with isLoading = false immediately (0ms wait)
+  const [isLoading, setIsLoading] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return true;
+    const storedToken = localStorage.getItem('accessToken');
+    const storedUser = localStorage.getItem('user');
+    return !(storedToken && storedUser);
+  });
 
   const fetchDealerships = async () => {
     try {
       const res = await api.get('/dealerships');
       if (res.data?.success && Array.isArray(res.data.data)) {
-        setDealerships(res.data.data);
+        const list: Dealership[] = res.data.data;
+        setDealerships(list);
+        localStorage.setItem('dealerships', JSON.stringify(list));
+
         const storedDealershipId = localStorage.getItem('activeDealershipId');
         const found =
-          res.data.data.find((d: Dealership) => d._id === storedDealershipId) ||
-          res.data.data.find((d: Dealership) => d.code === 'SMH-01') ||
-          res.data.data[0];
+          list.find((d: Dealership) => d._id === storedDealershipId) ||
+          list.find((d: Dealership) => d.code === 'SMH-01') ||
+          list[0];
 
         if (found) {
           setActiveDealershipState(found);
           localStorage.setItem('activeDealershipId', found._id);
+          localStorage.setItem('activeDealership', JSON.stringify(found));
         }
       }
     } catch (err) {
@@ -59,18 +107,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     const init = async () => {
       const storedToken = localStorage.getItem('accessToken');
-      const storedUser = localStorage.getItem('user');
-
-      if (storedUser) {
-        try {
-          setUser(JSON.parse(storedUser));
-        } catch {}
+      if (!storedToken) {
+        setIsLoading(false);
+        return;
       }
 
-      if (storedToken) {
+      // Revalidate profile and dealerships in background without blocking the UI
+      try {
         await Promise.all([refreshProfile(), fetchDealerships()]);
+      } catch (err) {
+        console.error('Background auth sync error', err);
+      } finally {
+        setIsLoading(false);
       }
-      setIsLoading(false);
     };
 
     init();
@@ -89,7 +138,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch {}
     localStorage.removeItem('accessToken');
     localStorage.removeItem('user');
+    localStorage.removeItem('activeDealershipId');
+    localStorage.removeItem('activeDealership');
+    localStorage.removeItem('dealerships');
     setUser(null);
+    setActiveDealershipState(null);
     if (typeof window !== 'undefined') {
       window.location.href = '/login';
     }
@@ -98,6 +151,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const setActiveDealership = (dealership: Dealership) => {
     setActiveDealershipState(dealership);
     localStorage.setItem('activeDealershipId', dealership._id);
+    localStorage.setItem('activeDealership', JSON.stringify(dealership));
   };
 
   return (
